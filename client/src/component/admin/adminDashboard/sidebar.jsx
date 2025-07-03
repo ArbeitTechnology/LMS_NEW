@@ -82,8 +82,15 @@ const Sidebar = ({ activeView, setActiveView }) => {
 
   const baseNavItems = [
     { name: "dashboard", icon: <FiHome />, component: "dashboard" },
-    { name: "security", icon: <FiShield />, component: "security" },
-    { name: "analytics", icon: <FiPieChart />, component: "analytics" },
+
+    {
+      name: "Teachers",
+      icon: <FiUser />,
+      children: [
+        { name: "Create Teacher", component: "TeacherRegistration" },
+        { name: "List Teacher", component: "teacherList" },
+      ],
+    },
     {
       name: "notifications",
       icon: (
@@ -100,24 +107,12 @@ const Sidebar = ({ activeView, setActiveView }) => {
       ),
       component: "notifications",
     },
-    {
-      name: "Teachers",
-      icon: <FiUser />,
-      children: [
-        { name: "Create Teacher", component: "TeacherRegistration" },
-        { name: "List Teacher", component: "teacherList" },
-      ],
-    },
-    { name: "database", icon: <FiDatabase />, component: "database" },
-    { name: "messages", icon: <FiMail />, component: "messages" },
-    { name: "development", icon: <FiCode />, component: "development" },
-    { name: "favorites", icon: <FiStar />, component: "favorites" },
     { name: "settings", icon: <FiSettings />, component: "settings" },
   ];
 
   // Add Subadmin menu only for Admins
   if (role === "admin") {
-    baseNavItems.splice(4, 0, {
+    baseNavItems.splice(1, 0, {
       name: "subadmin",
       icon: <FiUsers />,
       children: [
@@ -149,9 +144,7 @@ const Sidebar = ({ activeView, setActiveView }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("admin");
     localStorage.removeItem("role");
-
     toast.success("Logout successful!");
-
     setTimeout(() => {
       navigate("/admin", { replace: true });
     }, 800);

@@ -85,8 +85,8 @@ const SubadminList = () => {
   );
 
   return (
-    <div className="p-6 bg-white">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
         <h2 className="text-2xl font-bold text-black">Sub-Admin Management</h2>
         <div className="flex space-x-3">
           <motion.button

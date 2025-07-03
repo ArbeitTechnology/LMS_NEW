@@ -129,10 +129,10 @@ const SubadminCreate = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gray-50 flex flex-col p-4"
+      className="min-h-screen flex flex-col p-2"
     >
       {/* New Header Section */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
         <h2 className="text-2xl font-bold text-black">Sub-Admin Creation</h2>
       </div>
 
@@ -143,7 +143,7 @@ const SubadminCreate = () => {
       >
         <motion.form
           onSubmit={handleSubmit}
-          className="bg-white rounded-xl shadow-xl p-8 border border-gray-100"
+          className="bg-white rounded-xl shadow-xl p-8 border border-gray-100 overflow-hidden"
         >
           <div className="mb-8 text-center">
             <h2 className="text-xl font-semibold text-gray-800 mb-2">

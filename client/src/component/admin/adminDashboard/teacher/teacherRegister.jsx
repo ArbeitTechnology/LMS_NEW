@@ -105,8 +105,9 @@ const TeacherRegistration = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) validateField(name, value);
+    const newValue = name === "email" ? value.toLowerCase() : value;
+    setForm((prev) => ({ ...prev, [name]: newValue }));
+    if (errors[name]) validateField(name, newValue);
   };
 
   const handleFileChange = (e) => {
@@ -230,13 +231,14 @@ const TeacherRegistration = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gray-50 flex flex-col items-center p-2"
+      className="min-h-screen flex flex-col items-center p-2"
     >
       {/* Header Section */}
-      <div className="w-full mb-6">
+      <div className="w-full mb-8 pb-6 border-b border-gray-200">
         <h1 className="text-2xl font-bold text-gray-900 text-left">
           Teacher Registration
         </h1>
+        <p className="text-gray-600 mt-2">Register expertise teachers here</p>
       </div>
 
       <motion.div
@@ -487,7 +489,7 @@ const TeacherRegistration = () => {
                   placeholder="25.00"
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.hourly_rate ? "border-red-500" : "border-gray-700"
-                  } focus:ring-2 focus:ring-black focus:border-transparent`}
+                  } focus:ring-2 focus:ring-black focus:border-transparent appearance-none`}
                 />
                 {errors.hourly_rate && (
                   <motion.p
@@ -512,36 +514,61 @@ const TeacherRegistration = () => {
               <div
                 className={`border-2 border-dashed ${
                   errors.cv ? "border-red-500" : "border-gray-300"
-                } rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50`}
+                } rounded-lg p-4 min-h-[60px] text-center hover:bg-gray-50`}
               >
-                <label className="block">
-                  {files.cv ? (
-                    <p className="text-gray-900">{files.cv.name}</p>
-                  ) : (
-                    <>
-                      <p className="text-gray-500 text-sm mb-1">
-                        Click to upload CV
-                      </p>
-                      <p className="text-xs text-gray-400">PDF only</p>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    name="cv"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".pdf"
-                  />
-                </label>
+                {files.cv ? (
+                  <div className="flex items-center justify-between">
+                    <p className="text-gray-900 text-sm truncate max-w-[180px]">
+                      {files.cv.name}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFiles((prev) => ({ ...prev, cv: null }));
+                        setErrors((prev) => ({
+                          ...prev,
+                          cv: "CV is required",
+                        }));
+                      }}
+                      className="text-gray-400 hover:text-red-500 ml-2 transition-colors duration-200"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block cursor-pointer">
+                    <p className="text-gray-500 text-sm mb-1">
+                      Click to upload CV
+                    </p>
+                    <p className="text-xs text-gray-400">PDF only</p>
+                    <input
+                      type="file"
+                      name="cv"
+                      onChange={(e) => {
+                        handleFileChange(e);
+                        setErrors((prev) => ({ ...prev, cv: "" }));
+                      }}
+                      className="hidden"
+                      accept=".pdf"
+                    />
+                  </label>
+                )}
               </div>
-              {errors.cv && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-red-500"
-                >
-                  {errors.cv}
-                </motion.p>
+              {errors.cv && !files.cv && (
+                <p className="text-sm text-red-500">{errors.cv}</p>
               )}
             </div>
 
@@ -553,55 +580,117 @@ const TeacherRegistration = () => {
               <div
                 className={`border-2 border-dashed ${
                   errors.certificates ? "border-red-500" : "border-gray-300"
-                } rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50`}
+                } rounded-lg p-4 min-h-[60px] text-center hover:bg-gray-50 transition-colors duration-200`}
               >
-                <label className="block">
-                  {files.certificates.length > 0 ? (
-                    <div className="space-y-1">
+                {files.certificates.length === 0 && (
+                  <label className="block cursor-pointer">
+                    <p className="text-gray-500 text-sm mb-1">
+                      Click to upload certificates
+                    </p>
+                    <p className="text-xs text-gray-400">PDF or images</p>
+                    <input
+                      type="file"
+                      name="certificates"
+                      onChange={(e) => {
+                        handleFileChange(e);
+                        setErrors((prev) => ({
+                          ...prev,
+                          certificates: "",
+                        }));
+                      }}
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      multiple
+                    />
+                  </label>
+                )}
+
+                {files.certificates.length > 0 && (
+                  <>
+                    <ul className="mb-3 space-y-1 text-left text-sm text-gray-800">
                       {files.certificates.map((cert, index) => (
-                        <div
+                        <li
                           key={index}
-                          className="flex items-center justify-between"
+                          className="flex justify-between items-center mb-1.5 hover:bg-gray-50 rounded"
                         >
-                          <p className="text-gray-900 text-sm truncate">
+                          <span className="truncate max-w-[180px]">
                             {cert.name}
-                          </p>
+                          </span>
                           <button
                             type="button"
-                            onClick={() => removeCertificate(index)}
-                            className="text-red-500 hover:text-red-700"
+                            onClick={() => {
+                              removeCertificate(index);
+                              setErrors((prev) => ({
+                                ...prev,
+                                certificates:
+                                  files.certificates.length <= 1
+                                    ? "At least one certificate is required"
+                                    : "",
+                              }));
+                            }}
+                            className="text-gray-400 hover:text-red-500 ml-2 transition-colors duration-200"
                           >
-                            ×
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
                           </button>
-                        </div>
+                        </li>
                       ))}
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-gray-500 text-sm mb-1">
-                        Click to upload certificates
-                      </p>
-                      <p className="text-xs text-gray-400">PDF or images</p>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    name="certificates"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    multiple
-                  />
-                </label>
+                    </ul>
+
+                    {/* Stylish Add More button */}
+                    <label className="inline-flex items-center cursor-pointer group">
+                      <span className="relative inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm group-hover:shadow">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        Add More
+                        <input
+                          type="file"
+                          name="certificates"
+                          onChange={(e) => {
+                            handleFileChange(e);
+                            setErrors((prev) => ({
+                              ...prev,
+                              certificates: "",
+                            }));
+                          }}
+                          className="hidden"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          multiple
+                        />
+                      </span>
+                    </label>
+                  </>
+                )}
               </div>
-              {errors.certificates && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-red-500"
-                >
+
+              {errors.certificates && files.certificates.length === 0 && (
+                <p className="text-sm text-red-500 mt-1">
                   {errors.certificates}
-                </motion.p>
+                </p>
               )}
             </div>
 
@@ -610,26 +699,53 @@ const TeacherRegistration = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Profile Photo (JPG/PNG, max 2MB)
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50">
-                <label className="block">
-                  {files.profile_photo ? (
-                    <p className="text-gray-900">{files.profile_photo.name}</p>
-                  ) : (
-                    <>
-                      <p className="text-gray-500 text-sm mb-1">
-                        Click to upload photo
-                      </p>
-                      <p className="text-xs text-gray-400">JPG or PNG</p>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    name="profile_photo"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".jpg,.jpeg,.png"
-                  />
-                </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[60px] text-center hover:bg-gray-50">
+                {files.profile_photo ? (
+                  <div className="flex items-center justify-between">
+                    <p className="text-gray-900 text-sm truncate max-w-[180px]">
+                      {files.profile_photo.name}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFiles((prev) => ({
+                          ...prev,
+                          profile_photo: null,
+                        }))
+                      }
+                      className="text-gray-400 hover:text-red-500 ml-2 transition-colors duration-200"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block cursor-pointer">
+                    <p className="text-gray-500 text-sm mb-1">
+                      Click to upload photo
+                    </p>
+                    <p className="text-xs text-gray-400">JPG or PNG</p>
+                    <input
+                      type="file"
+                      name="profile_photo"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept=".jpg,.jpeg,.png"
+                    />
+                  </label>
+                )}
               </div>
             </div>
           </div>
