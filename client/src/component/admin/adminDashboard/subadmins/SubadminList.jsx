@@ -10,13 +10,15 @@ const SubadminList = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [editStatusId, setEditStatusId] = useState(null);
+  const [editedStatus, setEditedStatus] = useState("");
 
   const fetchSubadmins = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.get("http://localhost:3500/api/auth/subadmins", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
       setSubadmins(res.data.subadmins || []);
     } catch (error) {
@@ -25,12 +27,12 @@ const SubadminList = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
         },
         iconTheme: {
           primary: "#ff0000", // bright red
-          secondary: "#ffffff", // white
-        },
+          secondary: "#ffffff" // white
+        }
       });
     } finally {
       setLoading(false);
@@ -45,19 +47,19 @@ const SubadminList = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`http://localhost:3500/api/auth/subadmin/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Subadmin deleted successfully", {
         style: {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
         },
         iconTheme: {
           primary: "#000",
-          secondary: "#fff",
-        },
+          secondary: "#fff"
+        }
       });
       fetchSubadmins();
     } catch (error) {
@@ -66,15 +68,32 @@ const SubadminList = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
         },
         iconTheme: {
           primary: "#ff0000", // bright red
-          secondary: "#ffffff", // white
-        },
+          secondary: "#ffffff" // white
+        }
       });
     } finally {
       setConfirmDelete(null);
+    }
+  };
+  const handleStatusUpdate = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `http://localhost:3500/api/auth/subadmin/${id}/status`,
+        { status: editedStatus },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      toast.success("Status updated");
+      fetchSubadmins();
+      setEditStatusId(null);
+    } catch (err) {
+      toast.error("Failed to update status");
     }
   };
 
@@ -135,7 +154,7 @@ const SubadminList = () => {
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Role
+                  Status
                 </th>
                 <th
                   scope="col"
@@ -184,9 +203,48 @@ const SubadminList = () => {
                       <div className="text-sm text-black">{admin.email}</div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="p-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                        {admin.role || "Subadmin"}
-                      </span>
+                      {editStatusId === admin._id ? (
+                        <div className="flex items-center space-x-2">
+                          <select
+                            value={editedStatus}
+                            onChange={(e) => setEditedStatus(e.target.value)}
+                            className="border border-gray-300 rounded px-2 py-1 text-sm"
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="suspended">Suspended</option>
+                          </select>
+                          <button
+                            onClick={() => handleStatusUpdate(admin._id)}
+                            className="text-green-600 hover:underline text-sm"
+                          >
+                            Update
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`p-1 px-3 text-xs rounded-full capitalize ${
+                              admin.status === "active"
+                                ? "bg-green-100 text-green-800"
+                                : admin.status === "inactive"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {admin.status}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setEditStatusId(admin._id);
+                              setEditedStatus(admin.status);
+                            }}
+                            className="text-gray-500 hover:text-black"
+                          >
+                            ✎
+                          </button>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end">

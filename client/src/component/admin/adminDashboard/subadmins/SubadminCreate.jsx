@@ -9,12 +9,12 @@ const SubadminCreate = () => {
   const [form, setForm] = useState({
     username: "",
     email: "",
-    password: "",
+    password: ""
   });
   const [errors, setErrors] = useState({
     username: "",
     email: "",
-    password: "",
+    password: ""
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,12 +82,12 @@ const SubadminCreate = () => {
         "http://localhost:3500/api/auth/subadmin",
         {
           ...form,
-          email: form.email.toLowerCase(),
+          email: form.email.toLowerCase()
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-          },
+            Authorization: `Bearer ${token}`
+          }
         }
       );
 
@@ -96,12 +96,12 @@ const SubadminCreate = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
         },
         iconTheme: {
           primary: "#000",
-          secondary: "#fff",
-        },
+          secondary: "#fff"
+        }
       });
 
       setForm({ username: "", email: "", password: "" });
@@ -112,12 +112,12 @@ const SubadminCreate = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
         },
         iconTheme: {
           primary: "#ff0000",
-          secondary: "#ffffff",
-        },
+          secondary: "#ffffff"
+        }
       });
     } finally {
       setIsSubmitting(false);

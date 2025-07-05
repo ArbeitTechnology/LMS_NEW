@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import {
@@ -21,14 +22,18 @@ import {
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom"; // Make sure this is imported
+import { useNavigate } from "react-router-dom";
 
-const Sidebar = ({ activeView, setActiveView }) => {
+const Sidebar = ({
+  activeView,
+  setActiveView,
+  notificationCount,
+  setNotificationCount,
+}) => {
   const [isOpen, setIsOpen] = useState(true);
   const [adminData, setAdminData] = useState({
     name: "Loading...",
     email: "loading...@example.com",
-    hasNotifications: false,
     avatarColor: "bg-gradient-to-r from-purple-500 to-pink-500",
   });
   const [loading, setLoading] = useState(true);
@@ -36,6 +41,7 @@ const Sidebar = ({ activeView, setActiveView }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const role = localStorage.getItem("role");
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchAdminData = async () => {
       try {
@@ -64,9 +70,21 @@ const Sidebar = ({ activeView, setActiveView }) => {
         setAdminData({
           name: response.data.username || "Admin User",
           email: response.data.email || "admin@example.com",
-          hasNotifications: response.data.notifications || false,
           avatarColor: randomGradient,
         });
+
+        // Fetch notifications
+        const notificationResponse = await axios.get(
+          "http://localhost:3500/api/auth/notifications",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Set the notification count based on the length of notifications
+        setNotificationCount(notificationResponse.data.notifications.length);
       } catch (err) {
         console.error("Failed to fetch admin data:", err);
         toast.error("Failed to load admin data");
@@ -96,12 +114,14 @@ const Sidebar = ({ activeView, setActiveView }) => {
       icon: (
         <div className="relative">
           <FiBell />
-          {adminData.hasNotifications && (
+          {notificationCount > 0 && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
-            ></motion.span>
+              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs text-white"
+            >
+              {notificationCount}
+            </motion.span>
           )}
         </div>
       ),
@@ -149,6 +169,7 @@ const Sidebar = ({ activeView, setActiveView }) => {
       navigate("/admin", { replace: true });
     }, 800);
   };
+
   return (
     <motion.aside
       initial={{ width: isOpen ? 256 : 80 }}

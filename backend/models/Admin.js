@@ -5,26 +5,31 @@ const AdminSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: true,
+      required: true
     },
     email: {
       type: String,
       required: true,
       unique: true,
-      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     },
     password: {
       type: String,
       required: true,
-      minlength: 8,
+      minlength: 8
     },
     role: {
       type: String,
       enum: ["admin", "subadmin"],
-      default: "subadmin", // Default role for created accounts
+      default: "subadmin"
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "inactive"
     },
     resetCode: String,
-    resetCodeExpires: Date,
+    resetCodeExpires: Date
   },
   { timestamps: true }
 );

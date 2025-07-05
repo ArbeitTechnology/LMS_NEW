@@ -1,7 +1,7 @@
+/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import {
   FiEye,
@@ -26,11 +26,13 @@ const TeacherRegistration = () => {
     linkedin_url: "",
     hourly_rate: "",
   });
+
   const [files, setFiles] = useState({
     cv: null,
     certificates: [],
     profile_photo: null,
   });
+
   const [errors, setErrors] = useState({
     email: "",
     password: "",
@@ -40,13 +42,23 @@ const TeacherRegistration = () => {
     qualifications: "",
     cv: "",
     certificates: "",
+    profile_photo: "",
   });
+
+  const [fileSizeErrors, setFileSizeErrors] = useState({
+    cv: "",
+    certificates: "",
+    profile_photo: "",
+  });
+
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+  const MAX_PROFILE_PHOTO_SIZE = 2 * 1024 * 1024; // 2MB for profile photo
+
   const validateField = (name, value) => {
     let error = "";
-
     switch (name) {
       case "email":
         if (!value) error = "Email is required";
@@ -111,26 +123,69 @@ const TeacherRegistration = () => {
   };
 
   const handleFileChange = (e) => {
-    const { name } = e.target;
-    const fileList = Array.from(e.target.files);
+    const { name, files: selectedFiles } = e.target;
+    let hasSizeError = false;
 
-    if (name === "certificates") {
-      setFiles((prev) => ({ ...prev, [name]: [...prev[name], ...fileList] }));
-    } else {
-      setFiles((prev) => ({ ...prev, [name]: fileList[0] }));
+    // Clear previous size errors for this field
+    setFileSizeErrors((prev) => ({ ...prev, [name.replace("[]", "")]: "" }));
+
+    // Validate file sizes
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      let maxSize = MAX_FILE_SIZE;
+
+      if (name === "profile_photo") {
+        maxSize = MAX_PROFILE_PHOTO_SIZE;
+      }
+
+      if (file.size > maxSize) {
+        const sizeInMB = (maxSize / (1024 * 1024)).toFixed(2);
+        const fieldName = name.replace("[]", "");
+        setFileSizeErrors((prev) => ({
+          ...prev,
+          [fieldName]: `File "${file.name}" exceeds ${sizeInMB}MB limit`,
+        }));
+        hasSizeError = true;
+      }
     }
 
-    validateField(name, fileList.length > 0 ? "exists" : "");
+    if (hasSizeError) return;
+
+    if (name === "certificates[]") {
+      setFiles((prev) => ({
+        ...prev,
+        certificates: [...prev.certificates, ...selectedFiles],
+      }));
+    } else if (name === "cv") {
+      setFiles((prev) => ({
+        ...prev,
+        cv: selectedFiles[0],
+      }));
+    } else if (name === "profile_photo") {
+      setFiles((prev) => ({
+        ...prev,
+        profile_photo: selectedFiles[0],
+      }));
+    }
+
+    // Clear required error if file is uploaded
+    const fieldName = name.replace("[]", "");
+    if (selectedFiles.length > 0 && errors[fieldName]) {
+      setErrors((prev) => ({ ...prev, [fieldName]: "" }));
+    }
   };
 
   const removeCertificate = (index) => {
     const updatedCertificates = [...files.certificates];
     updatedCertificates.splice(index, 1);
     setFiles((prev) => ({ ...prev, certificates: updatedCertificates }));
-    validateField(
-      "certificates",
-      updatedCertificates.length > 0 ? "exists" : ""
-    );
+
+    if (updatedCertificates.length === 0) {
+      setErrors((prev) => ({
+        ...prev,
+        certificates: "At least one certificate is required",
+      }));
+    }
   };
 
   const validateForm = () => {
@@ -143,34 +198,50 @@ const TeacherRegistration = () => {
     isValid = validateField("qualifications", form.qualifications) && isValid;
     isValid = validateField("cv", files.cv) && isValid;
     isValid = validateField("certificates", files.certificates) && isValid;
+
+    // Check for file size errors
+    if (
+      fileSizeErrors.cv ||
+      fileSizeErrors.certificates ||
+      fileSizeErrors.profile_photo
+    ) {
+      isValid = false;
+    }
+
     return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error("Please fix all errors before submitting");
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
       const formData = new FormData();
 
-      // Append form fields
       Object.entries(form).forEach(([key, value]) => {
         if (value) formData.append(key, value);
       });
 
-      // Append files
-      if (files.cv) formData.append("cv", files.cv);
-      if (files.profile_photo)
+      if (files.cv) {
+        formData.append("cv", files.cv);
+      }
+
+      if (files.profile_photo) {
         formData.append("profile_photo", files.profile_photo);
-      files.certificates.forEach((cert, index) => {
-        formData.append(`certificates[${index}]`, cert);
+      }
+
+      files.certificates.forEach((cert) => {
+        formData.append("certificates[]", cert);
       });
 
       await axios.post(
-        // "http://localhost:3500/api/auth/register/teacher",
+        "http://localhost:3500/api/auth/teacher-register",
         formData,
         {
           headers: {
@@ -179,18 +250,7 @@ const TeacherRegistration = () => {
         }
       );
 
-      toast.success("Registration submitted for approval", {
-        style: {
-          background: "#fff",
-          color: "#000",
-          border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        },
-        iconTheme: {
-          primary: "#000",
-          secondary: "#fff",
-        },
-      });
+      toast.success("Registration submitted for approval");
 
       // Reset form
       setForm({
@@ -208,19 +268,24 @@ const TeacherRegistration = () => {
         certificates: [],
         profile_photo: null,
       });
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Registration failed", {
-        style: {
-          background: "#fff",
-          color: "#000",
-          border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        },
-        iconTheme: {
-          primary: "#ff0000",
-          secondary: "#ffffff",
-        },
+      setErrors({
+        email: "",
+        password: "",
+        full_name: "",
+        phone: "",
+        specialization: "",
+        qualifications: "",
+        cv: "",
+        certificates: "",
+        profile_photo: "",
       });
+      setFileSizeErrors({
+        cv: "",
+        certificates: "",
+        profile_photo: "",
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Registration failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -233,7 +298,6 @@ const TeacherRegistration = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen flex flex-col items-center p-2"
     >
-      {/* Header Section */}
       <div className="w-full mb-8 pb-6 border-b border-gray-200">
         <h1 className="text-2xl font-bold text-gray-900 text-left">
           Teacher Registration
@@ -276,7 +340,7 @@ const TeacherRegistration = () => {
                   placeholder="teacher@example.com"
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.email ? "border-red-500" : "border-gray-700"
-                  } focus:ring-2 focus:ring-black focus:border-transparent`}
+                  } focus:ring-2 focus:ring-black focus:border-gray-500`}
                 />
                 {errors.email && (
                   <motion.p
@@ -304,7 +368,7 @@ const TeacherRegistration = () => {
                     placeholder="At least 8 characters with 1 number & special char"
                     className={`w-full px-4 py-3 rounded-lg border ${
                       errors.password ? "border-red-500" : "border-gray-700"
-                    } focus:ring-2 focus:ring-black focus:border-transparent pr-10`}
+                    } focus:ring-2 focus:ring-black focus:border-gray-500 pr-10`}
                   />
                   <button
                     type="button"
@@ -338,7 +402,7 @@ const TeacherRegistration = () => {
                   placeholder="First and Last name"
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.full_name ? "border-red-500" : "border-gray-700"
-                  } focus:ring-2 focus:ring-black focus:border-transparent`}
+                  } focus:ring-2 focus:ring-black focus:border-gray-500`}
                 />
                 {errors.full_name && (
                   <motion.p
@@ -364,7 +428,7 @@ const TeacherRegistration = () => {
                   placeholder="+8801912345678"
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.phone ? "border-red-500" : "border-gray-700"
-                  } focus:ring-2 focus:ring-black focus:border-transparent`}
+                  } focus:ring-2 focus:ring-black focus:border-gray-500`}
                 />
                 {errors.phone && (
                   <motion.p
@@ -394,7 +458,7 @@ const TeacherRegistration = () => {
                   }
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.specialization ? "border-red-500" : "border-gray-700"
-                  } focus:ring-2 focus:ring-black focus:border-transparent`}
+                  } focus:ring-2 focus:ring-black focus:border-gray-500`}
                 >
                   <option value="">Select your specialization</option>
                   <option value="IELTS">IELTS</option>
@@ -431,7 +495,7 @@ const TeacherRegistration = () => {
                   rows="3"
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.qualifications ? "border-red-500" : "border-gray-700"
-                  } focus:ring-2 focus:ring-black focus:border-transparent`}
+                  } `}
                 />
                 {errors.qualifications && (
                   <motion.p
@@ -459,7 +523,7 @@ const TeacherRegistration = () => {
                   placeholder="linkedin.com/in/username"
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.linkedin_url ? "border-red-500" : "border-gray-700"
-                  } focus:ring-2 focus:ring-black focus:border-transparent`}
+                  } focus:ring-2 focus:ring-black focus:border-gray-500`}
                 />
                 {errors.linkedin_url && (
                   <motion.p
@@ -489,7 +553,7 @@ const TeacherRegistration = () => {
                   placeholder="25.00"
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.hourly_rate ? "border-red-500" : "border-gray-700"
-                  } focus:ring-2 focus:ring-black focus:border-transparent appearance-none`}
+                  } focus:ring-2 focus:ring-black focus:border-gray-500 appearance-none`}
                 />
                 {errors.hourly_rate && (
                   <motion.p
@@ -513,7 +577,9 @@ const TeacherRegistration = () => {
               </label>
               <div
                 className={`border-2 border-dashed ${
-                  errors.cv ? "border-red-500" : "border-gray-300"
+                  errors.cv || fileSizeErrors.cv
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg p-4 min-h-[60px] text-center hover:bg-gray-50`}
               >
                 {files.cv ? (
@@ -529,6 +595,7 @@ const TeacherRegistration = () => {
                           ...prev,
                           cv: "CV is required",
                         }));
+                        setFileSizeErrors((prev) => ({ ...prev, cv: "" }));
                       }}
                       className="text-gray-400 hover:text-red-500 ml-2 transition-colors duration-200"
                     >
@@ -557,17 +624,17 @@ const TeacherRegistration = () => {
                     <input
                       type="file"
                       name="cv"
-                      onChange={(e) => {
-                        handleFileChange(e);
-                        setErrors((prev) => ({ ...prev, cv: "" }));
-                      }}
+                      onChange={handleFileChange}
                       className="hidden"
                       accept=".pdf"
                     />
                   </label>
                 )}
               </div>
-              {errors.cv && !files.cv && (
+              {fileSizeErrors.cv && (
+                <p className="text-sm text-red-500">{fileSizeErrors.cv}</p>
+              )}
+              {errors.cv && !fileSizeErrors.cv && (
                 <p className="text-sm text-red-500">{errors.cv}</p>
               )}
             </div>
@@ -579,10 +646,12 @@ const TeacherRegistration = () => {
               </label>
               <div
                 className={`border-2 border-dashed ${
-                  errors.certificates ? "border-red-500" : "border-gray-300"
+                  errors.certificates || fileSizeErrors.certificates
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-lg p-4 min-h-[60px] text-center hover:bg-gray-50 transition-colors duration-200`}
               >
-                {files.certificates.length === 0 && (
+                {files.certificates.length === 0 ? (
                   <label className="block cursor-pointer">
                     <p className="text-gray-500 text-sm mb-1">
                       Click to upload certificates
@@ -590,22 +659,14 @@ const TeacherRegistration = () => {
                     <p className="text-xs text-gray-400">PDF or images</p>
                     <input
                       type="file"
-                      name="certificates"
-                      onChange={(e) => {
-                        handleFileChange(e);
-                        setErrors((prev) => ({
-                          ...prev,
-                          certificates: "",
-                        }));
-                      }}
+                      name="certificates[]"
+                      onChange={handleFileChange}
                       className="hidden"
                       accept=".pdf,.jpg,.jpeg,.png"
                       multiple
                     />
                   </label>
-                )}
-
-                {files.certificates.length > 0 && (
+                ) : (
                   <>
                     <ul className="mb-3 space-y-1 text-left text-sm text-gray-800">
                       {files.certificates.map((cert, index) => (
@@ -620,12 +681,9 @@ const TeacherRegistration = () => {
                             type="button"
                             onClick={() => {
                               removeCertificate(index);
-                              setErrors((prev) => ({
+                              setFileSizeErrors((prev) => ({
                                 ...prev,
-                                certificates:
-                                  files.certificates.length <= 1
-                                    ? "At least one certificate is required"
-                                    : "",
+                                certificates: "",
                               }));
                             }}
                             className="text-gray-400 hover:text-red-500 ml-2 transition-colors duration-200"
@@ -648,8 +706,6 @@ const TeacherRegistration = () => {
                         </li>
                       ))}
                     </ul>
-
-                    {/* Stylish Add More button */}
                     <label className="inline-flex items-center cursor-pointer group">
                       <span className="relative inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm group-hover:shadow">
                         <svg
@@ -669,14 +725,8 @@ const TeacherRegistration = () => {
                         Add More
                         <input
                           type="file"
-                          name="certificates"
-                          onChange={(e) => {
-                            handleFileChange(e);
-                            setErrors((prev) => ({
-                              ...prev,
-                              certificates: "",
-                            }));
-                          }}
+                          name="certificates[]"
+                          onChange={handleFileChange}
                           className="hidden"
                           accept=".pdf,.jpg,.jpeg,.png"
                           multiple
@@ -686,11 +736,13 @@ const TeacherRegistration = () => {
                   </>
                 )}
               </div>
-
-              {errors.certificates && files.certificates.length === 0 && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.certificates}
+              {fileSizeErrors.certificates && (
+                <p className="text-sm text-red-500">
+                  {fileSizeErrors.certificates}
                 </p>
+              )}
+              {errors.certificates && !fileSizeErrors.certificates && (
+                <p className="text-sm text-red-500">{errors.certificates}</p>
               )}
             </div>
 
@@ -699,7 +751,13 @@ const TeacherRegistration = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Profile Photo (JPG/PNG, max 2MB)
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[60px] text-center hover:bg-gray-50">
+              <div
+                className={`border-2 border-dashed ${
+                  fileSizeErrors.profile_photo
+                    ? "border-red-500"
+                    : "border-gray-300"
+                } rounded-lg p-4 min-h-[60px] text-center hover:bg-gray-50`}
+              >
                 {files.profile_photo ? (
                   <div className="flex items-center justify-between">
                     <p className="text-gray-900 text-sm truncate max-w-[180px]">
@@ -707,12 +765,13 @@ const TeacherRegistration = () => {
                     </p>
                     <button
                       type="button"
-                      onClick={() =>
-                        setFiles((prev) => ({
+                      onClick={() => {
+                        setFiles((prev) => ({ ...prev, profile_photo: null }));
+                        setFileSizeErrors((prev) => ({
                           ...prev,
-                          profile_photo: null,
-                        }))
-                      }
+                          profile_photo: "",
+                        }));
+                      }}
                       className="text-gray-400 hover:text-red-500 ml-2 transition-colors duration-200"
                     >
                       <svg
@@ -747,6 +806,11 @@ const TeacherRegistration = () => {
                   </label>
                 )}
               </div>
+              {fileSizeErrors.profile_photo && (
+                <p className="text-sm text-red-500">
+                  {fileSizeErrors.profile_photo}
+                </p>
+              )}
             </div>
           </div>
 
