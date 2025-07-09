@@ -12,7 +12,7 @@ import {
   FiPhone,
   FiFileText,
   FiLink,
-  FiDollarSign,
+  FiDollarSign
 } from "react-icons/fi";
 
 const TeacherRegistration = () => {
@@ -24,13 +24,13 @@ const TeacherRegistration = () => {
     specialization: "",
     qualifications: "",
     linkedin_url: "",
-    hourly_rate: "",
+    hourly_rate: ""
   });
 
   const [files, setFiles] = useState({
     cv: null,
     certificates: [],
-    profile_photo: null,
+    profile_photo: null
   });
 
   const [errors, setErrors] = useState({
@@ -42,13 +42,13 @@ const TeacherRegistration = () => {
     qualifications: "",
     cv: "",
     certificates: "",
-    profile_photo: "",
+    profile_photo: ""
   });
 
   const [fileSizeErrors, setFileSizeErrors] = useState({
     cv: "",
     certificates: "",
-    profile_photo: "",
+    profile_photo: ""
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -143,7 +143,7 @@ const TeacherRegistration = () => {
         const fieldName = name.replace("[]", "");
         setFileSizeErrors((prev) => ({
           ...prev,
-          [fieldName]: `File "${file.name}" exceeds ${sizeInMB}MB limit`,
+          [fieldName]: `File "${file.name}" exceeds ${sizeInMB}MB limit`
         }));
         hasSizeError = true;
       }
@@ -154,17 +154,17 @@ const TeacherRegistration = () => {
     if (name === "certificates[]") {
       setFiles((prev) => ({
         ...prev,
-        certificates: [...prev.certificates, ...selectedFiles],
+        certificates: [...prev.certificates, ...selectedFiles]
       }));
     } else if (name === "cv") {
       setFiles((prev) => ({
         ...prev,
-        cv: selectedFiles[0],
+        cv: selectedFiles[0]
       }));
     } else if (name === "profile_photo") {
       setFiles((prev) => ({
         ...prev,
-        profile_photo: selectedFiles[0],
+        profile_photo: selectedFiles[0]
       }));
     }
 
@@ -183,7 +183,7 @@ const TeacherRegistration = () => {
     if (updatedCertificates.length === 0) {
       setErrors((prev) => ({
         ...prev,
-        certificates: "At least one certificate is required",
+        certificates: "At least one certificate is required"
       }));
     }
   };
@@ -245,8 +245,8 @@ const TeacherRegistration = () => {
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
-          },
+            "Content-Type": "multipart/form-data"
+          }
         }
       );
 
@@ -261,12 +261,12 @@ const TeacherRegistration = () => {
         specialization: "",
         qualifications: "",
         linkedin_url: "",
-        hourly_rate: "",
+        hourly_rate: ""
       });
       setFiles({
         cv: null,
         certificates: [],
-        profile_photo: null,
+        profile_photo: null
       });
       setErrors({
         email: "",
@@ -277,12 +277,12 @@ const TeacherRegistration = () => {
         qualifications: "",
         cv: "",
         certificates: "",
-        profile_photo: "",
+        profile_photo: ""
       });
       setFileSizeErrors({
         cv: "",
         certificates: "",
-        profile_photo: "",
+        profile_photo: ""
       });
     } catch (err) {
       toast.error(err.response?.data?.message || "Registration failed");
@@ -458,7 +458,7 @@ const TeacherRegistration = () => {
                   }
                   className={`w-full px-4 py-3 rounded-lg border ${
                     errors.specialization ? "border-red-500" : "border-gray-700"
-                  } focus:ring-2 focus:ring-black focus:border-gray-500`}
+                  }  focus:border-gray-500`}
                 >
                   <option value="">Select your specialization</option>
                   <option value="IELTS">IELTS</option>
@@ -593,7 +593,7 @@ const TeacherRegistration = () => {
                         setFiles((prev) => ({ ...prev, cv: null }));
                         setErrors((prev) => ({
                           ...prev,
-                          cv: "CV is required",
+                          cv: "CV is required"
                         }));
                         setFileSizeErrors((prev) => ({ ...prev, cv: "" }));
                       }}
@@ -683,7 +683,7 @@ const TeacherRegistration = () => {
                               removeCertificate(index);
                               setFileSizeErrors((prev) => ({
                                 ...prev,
-                                certificates: "",
+                                certificates: ""
                               }));
                             }}
                             className="text-gray-400 hover:text-red-500 ml-2 transition-colors duration-200"
@@ -769,7 +769,7 @@ const TeacherRegistration = () => {
                         setFiles((prev) => ({ ...prev, profile_photo: null }));
                         setFileSizeErrors((prev) => ({
                           ...prev,
-                          profile_photo: "",
+                          profile_photo: ""
                         }));
                       }}
                       className="text-gray-400 hover:text-red-500 ml-2 transition-colors duration-200"

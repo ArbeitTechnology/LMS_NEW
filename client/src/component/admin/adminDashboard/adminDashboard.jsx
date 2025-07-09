@@ -5,6 +5,11 @@ import SubadminList from "../adminDashboard/subadmins/SubadminList";
 import TeacherRegistration from "./teacher/teacherRegister";
 import TeacherList from "./teacher/teacherList";
 import Notifications from "./notifications";
+import Settings from "./settings";
+import StudentAuth from "./student/studentCreate";
+import StudentList from "./student/studentList";
+import CourseCreator from "./courses/courseCreate";
+import CourseList from "./courses/courseList";
 
 const AdminDashboard = () => {
   const [activeView, setActiveView] = useState("dashboard");
@@ -19,8 +24,18 @@ const AdminDashboard = () => {
         return <TeacherRegistration />;
       case "teacherList":
         return <TeacherList />;
+      case "StudentRegistration":
+        return <StudentAuth />;
+      case "studentList":
+        return <StudentList />;
+      case "createCourse":
+        return <CourseCreator />;
+      case "courseList":
+        return <CourseList />;
       case "notifications":
         return <Notifications setNotificationCount={setNotificationCount} />;
+      case "settings":
+        return <Settings />;
       default:
         return <h1 className="p-6 text-xl font-bold">Dashboard Overview</h1>;
     }

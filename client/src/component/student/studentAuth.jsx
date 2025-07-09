@@ -9,14 +9,14 @@ import {
   FiLock,
   FiPhone,
   FiCalendar,
-  FiMapPin,
+  FiMapPin
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 
-const StudentAuth = () => {
+const StudentAuth = ({ authMode, setAuthMode }) => {
   // Auth mode state
-  const [authMode, setAuthMode] = useState("register"); // 'register' or 'login'
+
   const navigate = useNavigate();
 
   // Registration form state
@@ -26,30 +26,30 @@ const StudentAuth = () => {
     full_name: "",
     phone: "",
     date_of_birth: "",
-    address: "",
+    address: ""
   });
 
   const [files, setFiles] = useState({
-    profile_photo: null,
+    profile_photo: null
   });
 
   const [errors, setErrors] = useState({
     email: "",
     password: "",
     full_name: "",
-    phone: "",
+    phone: ""
   });
 
   // Login form state
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
-    remember: false,
+    remember: false
   });
 
   const [loginErrors, setLoginErrors] = useState({
     email: "",
-    password: "",
+    password: ""
   });
 
   // UI states
@@ -134,8 +134,8 @@ const StudentAuth = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        },
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+        }
       });
 
       // Reset form and switch to login
@@ -145,10 +145,10 @@ const StudentAuth = () => {
         full_name: "",
         phone: "",
         date_of_birth: "",
-        address: "",
+        address: ""
       });
       setFiles({
-        profile_photo: null,
+        profile_photo: null
       });
       setAuthMode("login");
     } catch (err) {
@@ -157,8 +157,8 @@ const StudentAuth = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        },
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+        }
       });
     } finally {
       setIsSubmitting(false);
@@ -217,8 +217,8 @@ const StudentAuth = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        },
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+        }
       });
 
       // Navigate to dashboard
@@ -229,14 +229,18 @@ const StudentAuth = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        },
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+        }
       });
     } finally {
       setIsLoginSubmitting(false);
     }
   };
-
+  const handleForgotPassword = () => {
+    navigate("/student/forgotPassword", {
+      state: { authMode } // Only pass serializable data
+    });
+  };
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -245,34 +249,6 @@ const StudentAuth = () => {
       className="min-h-screen bg-gray-50 flex items-center justify-center p-4"
     >
       <div className="w-full max-w-5xl mx-auto">
-        {/* Auth Mode Buttons */}
-        <div className="flex justify-center gap-4 mb-8">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setAuthMode("register")}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors duration-300 ${
-              authMode === "register"
-                ? "bg-black text-white shadow-md"
-                : "bg-white text-gray-600 hover:text-gray-800 border border-gray-300"
-            }`}
-          >
-            Register
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setAuthMode("login")}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors duration-300 ${
-              authMode === "login"
-                ? "bg-black text-white shadow-md"
-                : "bg-white text-gray-600 hover:text-gray-800 border border-gray-300"
-            }`}
-          >
-            Sign In
-          </motion.button>
-        </div>
-
         {/* Registration Form */}
         {authMode === "register" && (
           <motion.div
@@ -478,7 +454,7 @@ const StudentAuth = () => {
                           onClick={() =>
                             setFiles((prev) => ({
                               ...prev,
-                              profile_photo: null,
+                              profile_photo: null
                             }))
                           }
                           className="text-gray-400 hover:text-red-500 ml-2 transition-colors duration-200"
@@ -557,6 +533,17 @@ const StudentAuth = () => {
                     "Register"
                   )}
                 </motion.button>
+                <div className="text-center text-sm text-gray-600 mt-4">
+                  Already have an account?{" "}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    type="button"
+                    onClick={() => setAuthMode("login")}
+                    className="text-gray-600 hover:text-gray-800 font-medium"
+                  >
+                    Sign In
+                  </motion.button>
+                </div>
               </div>
             </form>
           </motion.div>
@@ -682,10 +669,10 @@ const StudentAuth = () => {
                             x: loginForm.remember ? 20 : 3,
                             backgroundColor: loginForm.remember
                               ? "#ffffff"
-                              : "#ffffff",
+                              : "#ffffff"
                           }}
                           style={{
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.2)"
                           }}
                         ></motion.div>
                       </div>
@@ -693,12 +680,13 @@ const StudentAuth = () => {
                     <span className="text-sm text-gray-600">Remember me</span>
                   </label>
 
-                  <Link
-                    to="/student/forgotPassword"
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword} // Handle navigation on click
                     className="text-sm text-gray-600 hover:text-blue-500 transition-colors duration-200"
                   >
                     Forgot password?
-                  </Link>
+                  </button>
                 </motion.div>
 
                 {/* Submit Button */}
@@ -749,7 +737,7 @@ const StudentAuth = () => {
                     whileHover={{ scale: 1.05 }}
                     type="button"
                     onClick={() => setAuthMode("register")}
-                    className="text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-gray-600 hover:text-gray-800 font-medium"
                   >
                     Register here
                   </motion.button>

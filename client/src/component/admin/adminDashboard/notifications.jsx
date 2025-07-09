@@ -9,7 +9,7 @@ import {
   FiBook,
   FiFileText,
   FiDownload,
-  FiClock,
+  FiClock
 } from "react-icons/fi";
 
 const Notifications = ({ setNotificationCount }) => {
@@ -32,7 +32,7 @@ const Notifications = ({ setNotificationCount }) => {
       const { data } = await axios.get(
         "http://localhost:3500/api/auth/notifications",
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
       setNotifications(data.notifications);
@@ -56,7 +56,7 @@ const Notifications = ({ setNotificationCount }) => {
         `http://localhost:3500/api/auth/teacher-status/${teacherId}`,
         { status: "approved" },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
 
@@ -80,10 +80,10 @@ const Notifications = ({ setNotificationCount }) => {
         `http://localhost:3500/api/auth/teacher-status/${selectedTeacher.id}`,
         {
           status: "rejected",
-          rejectionReason: rejectionReason || "Not specified",
+          rejectionReason: rejectionReason || "Not specified"
         },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
 
@@ -110,7 +110,7 @@ const Notifications = ({ setNotificationCount }) => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-md max-w-4xl mx-auto">
+    <div className="p-6 bg-white rounded-xl shadow-md max-w-7xl mx-auto">
       <h2 className="text-2xl font-semibold text-gray-800 mb-6">
         Pending Teacher Approvals
       </h2>

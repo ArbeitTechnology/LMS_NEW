@@ -41,3 +41,23 @@ input[type="number"] {
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(to bottom, #6c28d936, #db277828);
 }
+/* Hide the text inside the editor tabs */
+.tui-editor-tab.active {
+  color: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Add watermark to the editor area */
+.tui-editor-contents {
+  position: relative;
+}
+
+.tui-editor-contents:before {
+  content: "Write here";
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  color: #ccc;
+  font-size: 16px;
+  pointer-events: none; /* So that you can still type over it */
+}

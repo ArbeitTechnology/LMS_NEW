@@ -4,7 +4,7 @@ import {
   AiOutlineEye,
   AiOutlineEyeInvisible,
   AiOutlineLock,
-  AiOutlineMail
+  AiOutlineMail,
 } from "react-icons/ai";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom"; // Import Link for routing
@@ -20,7 +20,7 @@ const AdminLogin = () => {
   const [errors, setErrors] = useState({
     email: "",
     password: "",
-    username: ""
+    username: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false); // To check if registration is already done
@@ -83,7 +83,7 @@ const AdminLogin = () => {
           "http://localhost:3500/api/auth/login",
           {
             email: email.toLowerCase(),
-            password
+            password,
           }
         );
 
@@ -158,12 +158,12 @@ const AdminLogin = () => {
           {
             email: email.toLowerCase(),
             password: password,
-            username: username
+            username: username,
           },
           {
             headers: {
-              "Content-Type": "application/json"
-            }
+              "Content-Type": "application/json",
+            },
           }
         );
 
@@ -477,8 +477,8 @@ const AdminLogin = () => {
                         transition: {
                           type: "spring",
                           stiffness: 700,
-                          damping: 30
-                        }
+                          damping: 30,
+                        },
                       }}
                     />
                   </div>

@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import {
@@ -6,27 +5,19 @@ import {
   FiSettings,
   FiChevronLeft,
   FiChevronRight,
-  FiUsers,
   FiBell,
   FiChevronDown,
   FiChevronUp,
   FiLogOut,
-  FiUser,
-  FiLayers,
 } from "react-icons/fi";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-const Sidebar = ({
-  activeView,
-  setActiveView,
-  notificationCount,
-  setNotificationCount,
-}) => {
+const Sidebar = ({ activeView, setActiveView }) => {
   const [isOpen, setIsOpen] = useState(true);
-  const [adminData, setAdminData] = useState({
+  const [teacherData, setTeacherData] = useState({
     name: "Loading...",
     email: "loading...@example.com",
     avatarColor: "bg-gradient-to-r from-purple-500 to-pink-500",
@@ -34,17 +25,16 @@ const Sidebar = ({
   const [loading, setLoading] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState({});
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const role = localStorage.getItem("role");
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchAdminData = async () => {
+    const fetchTeacherData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("No token found");
 
         const response = await axios.get(
-          "http://localhost:3500/api/auth/admin",
+          // "http://localhost:3500/api/auth/teacher",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -62,96 +52,56 @@ const Sidebar = ({
         const randomGradient =
           gradients[Math.floor(Math.random() * gradients.length)];
 
-        setAdminData({
-          name: response.data.username || "Admin User",
-          email: response.data.email || "admin@example.com",
+        setTeacherData({
+          name: response.data.username || "teacher",
+          email: response.data.email || "teacher@example.com",
           avatarColor: randomGradient,
         });
 
         // Fetch notifications
         const notificationResponse = await axios.get(
-          "http://localhost:3500/api/auth/notifications",
+          // "http://localhost:3500/api/auth/notifications",
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-
-        // Set the notification count based on the length of notifications
-        setNotificationCount(notificationResponse.data.notifications.length);
       } catch (err) {
-        console.error("Failed to fetch admin data:", err);
-        toast.error("Failed to load admin data");
+        console.error("Failed to fetch teacher data:", err);
+        toast.error("Failed to load teacher data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAdminData();
+    fetchTeacherData();
   }, []);
 
-  const adminInitial = adminData.name.charAt(0).toUpperCase();
+  const teacherInitial = teacherData.name.charAt(0).toUpperCase();
 
   const baseNavItems = [
     { name: "dashboard", icon: <FiHome />, component: "dashboard" },
 
     {
-      name: "Teachers",
-      icon: <FiUser />,
-      children: [
-        { name: "Create Teacher", component: "TeacherRegistration" },
-        { name: "Teachers List ", component: "teacherList" },
-      ],
-    },
-    {
-      name: "Students",
-      icon: <FiUser />,
-      children: [
-        { name: "Create Student", component: "StudentRegistration" },
-        { name: "Students List", component: "studentList" },
-      ],
-    },
-    {
-      name: "Courses",
-      icon: <FiLayers />,
-      children: [
-        { name: "Create Courses", component: "createCourse" },
-        { name: "Course List", component: "courseList" },
-      ],
-    },
-    {
       name: "notifications",
       icon: (
         <div className="relative">
           <FiBell />
-          {notificationCount > 0 && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs text-white"
-            >
-              {notificationCount}
-            </motion.span>
-          )}
+
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs text-white"
+          >
+            0
+          </motion.span>
         </div>
       ),
       component: "notifications",
     },
     { name: "settings", icon: <FiSettings />, component: "settings" },
   ];
-
-  // Add Subadmin menu only for Admins
-  if (role === "admin") {
-    baseNavItems.splice(1, 0, {
-      name: "subadmin",
-      icon: <FiUsers />,
-      children: [
-        { name: "create subadmin", component: "subadminCreate" },
-        { name: "list subadmin", component: "subadminList" },
-      ],
-    });
-  }
 
   const toggleMenu = (menuName) => {
     setExpandedMenus((prev) => ({
@@ -173,11 +123,10 @@ const Sidebar = ({
 
   const confirmLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("admin");
-    localStorage.removeItem("role");
+    localStorage.removeItem("teacher");
     toast.success("Logout successful!");
     setTimeout(() => {
-      navigate("/admin", { replace: true });
+      navigate("/", { replace: true });
     }, 800);
   };
 
@@ -196,13 +145,13 @@ const Sidebar = ({
             animate={{ opacity: 1, x: 0 }}
             className="text-xl font-bold text-black"
           >
-            {role === "admin" ? "Admin Portal" : "Sub Admin Portal"}
+            Teacher Portal
           </motion.h1>
         ) : (
           <div
-            className={`w-8 h-8 rounded-full ${adminData.avatarColor} text-white flex items-center justify-center font-bold shadow-md`}
+            className={`w-8 h-8 rounded-full ${teacherData.avatarColor} text-white flex items-center justify-center font-bold shadow-md`}
           >
-            {adminInitial}
+            {teacherInitial}
           </div>
         )}
 
@@ -311,9 +260,9 @@ const Sidebar = ({
           whileHover={isOpen ? { scale: 1.01 } : {}}
         >
           <div
-            className={`w-10 h-10 rounded-full ${adminData.avatarColor} text-white flex items-center justify-center font-bold shadow-md`}
+            className={`w-10 h-10 rounded-full ${teacherData.avatarColor} text-white flex items-center justify-center font-bold shadow-md`}
           >
-            {adminInitial}
+            {teacherInitial}
           </div>
           {isOpen && (
             <motion.div
@@ -322,10 +271,10 @@ const Sidebar = ({
               className="ml-3"
             >
               <p className="text-sm font-medium text-gray-900 truncate max-w-[160px]">
-                {loading ? "Loading..." : adminData.name}
+                {loading ? "Loading..." : teacherData.name}
               </p>
               <p className="text-xs text-gray-500 truncate max-w-[160px]">
-                {adminData.email}
+                {teacherData.email}
               </p>
               <motion.button
                 whileHover={{ x: 2 }}
