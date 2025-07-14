@@ -18,6 +18,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAdmin } from "../../../context/AdminContext";
 
 const Sidebar = ({
   activeView,
@@ -26,72 +27,75 @@ const Sidebar = ({
   setNotificationCount,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
-  const [adminData, setAdminData] = useState({
-    name: "Loading...",
-    email: "loading...@example.com",
-    avatarColor: "bg-gradient-to-r from-purple-500 to-pink-500",
-  });
   const [loading, setLoading] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState({});
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const role = localStorage.getItem("role");
   const navigate = useNavigate();
+  const admin_info = JSON.parse(localStorage.getItem("admin"));
+  const { adminData, error, fetchAdminProfile } = useAdmin();
+  const token = localStorage.getItem("token"); // or from your auth context
 
   useEffect(() => {
-    const fetchAdminData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("No token found");
-
-        const response = await axios.get(
-          "http://localhost:3500/api/auth/admin",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const gradients = [
-          "bg-gradient-to-r from-purple-500 to-pink-500",
-          "bg-gradient-to-r from-blue-500 to-teal-400",
-          "bg-gradient-to-r from-amber-500 to-pink-500",
-          "bg-gradient-to-r from-emerald-500 to-blue-500",
-          "bg-gradient-to-r from-violet-500 to-fuchsia-500",
-        ];
-        const randomGradient =
-          gradients[Math.floor(Math.random() * gradients.length)];
-
-        setAdminData({
-          name: response.data.username || "Admin User",
-          email: response.data.email || "admin@example.com",
-          avatarColor: randomGradient,
-        });
-
-        // Fetch notifications
-        const notificationResponse = await axios.get(
-          "http://localhost:3500/api/auth/notifications",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        // Set the notification count based on the length of notifications
-        setNotificationCount(notificationResponse.data.notifications.length);
-      } catch (err) {
-        console.error("Failed to fetch admin data:", err);
-        toast.error("Failed to load admin data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAdminData();
+    if (admin_info && token) {
+      fetchAdminProfile(admin_info._id, token);
+    }
   }, []);
+  // useEffect(() => {
+  //   const fetchAdminData = async () => {
+  //     try {
+  //       const token = localStorage.getItem("token");
+  //       if (!token) throw new Error("No token found");
 
-  const adminInitial = adminData.name.charAt(0).toUpperCase();
+  //       const response = await axios.get(
+  //         "http://localhost:3500/api/auth/admin",
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       );
+
+  //       const gradients = [
+  //         "bg-gradient-to-r from-purple-500 to-pink-500",
+  //         "bg-gradient-to-r from-blue-500 to-teal-400",
+  //         "bg-gradient-to-r from-amber-500 to-pink-500",
+  //         "bg-gradient-to-r from-emerald-500 to-blue-500",
+  //         "bg-gradient-to-r from-violet-500 to-fuchsia-500",
+  //       ];
+  //       const randomGradient =
+  //         gradients[Math.floor(Math.random() * gradients.length)];
+
+  //       setAdminData({
+  //         name: response.data.username || "Admin User",
+  //         email: response.data.email || "admin@example.com",
+  //         avatarColor: randomGradient,
+  //       });
+
+  //       // Fetch notifications
+  //       const notificationResponse = await axios.get(
+  //         "http://localhost:3500/api/auth/notifications",
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       );
+
+  //       // Set the notification count based on the length of notifications
+  //       setNotificationCount(notificationResponse.data.notifications.length);
+  //     } catch (err) {
+  //       console.error("Failed to fetch admin data:", err);
+  //       toast.error("Failed to load admin data");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchAdminData();
+  // }, []);
+
+  // const adminInitial = adminData.username?.charAt(0).toUpperCase();
 
   const baseNavItems = [
     { name: "dashboard", icon: <FiHome />, component: "dashboard" },
@@ -200,9 +204,9 @@ const Sidebar = ({
           </motion.h1>
         ) : (
           <div
-            className={`w-8 h-8 rounded-full ${adminData.avatarColor} text-white flex items-center justify-center font-bold shadow-md`}
+            className={`w-8 h-8 rounded-full ${adminData.avatarColor} text-white bg-black flex items-center justify-center font-bold shadow-md`}
           >
-            {adminInitial}
+            {role === "admin" ? "A" : "S"}
           </div>
         )}
 
@@ -210,7 +214,7 @@ const Sidebar = ({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleToggleSidebar}
-          className="p-0.7 rounded-lg hover:bg-gray-200 text-gray-600 transition-colors"
+          className="p-0.7 rounded-lg hover:bg-gray-200 cursor-pointer text-gray-600 transition-colors"
         >
           {isOpen ? <FiChevronLeft /> : <FiChevronRight />}
         </motion.button>
@@ -227,9 +231,9 @@ const Sidebar = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => toggleMenu(item.name)}
-                    className={`flex items-center justify-between w-full p-4 rounded-xl ${
+                    className={`flex items-center cursor-pointer justify-between w-full mb-[10px] px-4 py-2.5 rounded-md ${
                       expandedMenus[item.name]
-                        ? "bg-gray-200 text-gray-900"
+                        ? "bg-gray-300 text-gray-900"
                         : "text-gray-700 hover:bg-gray-200"
                     } transition-colors`}
                   >
@@ -264,7 +268,7 @@ const Sidebar = ({
                           <motion.li key={child.name} whileHover={{ x: 5 }}>
                             <button
                               onClick={() => setActiveView(child.component)}
-                              className={`text-sm py-2.5 px-8 w-full text-left rounded-md transition-colors ${
+                              className={`text-sm py-2.5 cursor-pointer px-8 w-full text-left rounded-md transition-colors ${
                                 activeView === child.component
                                   ? "bg-gray-800 text-white font-medium shadow-sm"
                                   : "text-gray-600 hover:bg-gray-100"
@@ -283,7 +287,7 @@ const Sidebar = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setActiveView(item.component)}
-                  className={`flex items-center w-full p-4 rounded-xl transition-all ${
+                  className={`flex items-center w-full px-4 cursor-pointer py-2.5 mb-[10px] rounded-md transition-all ${
                     activeView === item.component
                       ? "bg-gray-900 text-white shadow-md"
                       : "text-gray-700 hover:bg-gray-200"
@@ -305,40 +309,60 @@ const Sidebar = ({
       </nav>
 
       {/* Footer Profile */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 bg-gray-50">
         <motion.div
-          className="flex items-center"
-          whileHover={isOpen ? { scale: 1.01 } : {}}
+          className="flex items-center gap-3"
+          whileHover={{ scale: isOpen ? 1 : 1.02 }}
         >
           <div
-            className={`w-10 h-10 rounded-full ${adminData.avatarColor} text-white flex items-center justify-center font-bold shadow-md`}
+            className={`w-10 h-10 rounded-full text-white flex items-center justify-center font-bold shadow-md flex-shrink-0 ${
+              // Different background colors based on first character
+              !adminData?.username
+                ? "bg-gray-500"
+                : adminData.username.charAt(0).toLowerCase() < "e"
+                ? "bg-blue-500"
+                : adminData.username.charAt(0).toLowerCase() < "j"
+                ? "bg-green-500"
+                : adminData.username.charAt(0).toLowerCase() < "p"
+                ? "bg-yellow-500"
+                : adminData.username.charAt(0).toLowerCase() < "u"
+                ? "bg-purple-500"
+                : "bg-pink-500"
+            }`}
           >
-            {adminInitial}
+            {adminData?.username
+              ? adminData.username.charAt(0).toUpperCase()
+              : "A"}
           </div>
+
           {isOpen && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="ml-3"
+              className="flex-1 min-w-0"
             >
-              <p className="text-sm font-medium text-gray-900 truncate max-w-[160px]">
-                {loading ? "Loading..." : adminData.name}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-[700] text-gray-900 truncate">
+                  {adminData?.username}
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleLogout}
+                  className="p-1 rounded-md hover:bg-gray-100 cursor-pointer transition-colors"
+                  title="Logout"
+                >
+                  <FiLogOut className="w-4 h-4 text-gray-500 hover:text-red-500" />
+                </motion.button>
+              </div>
+
+              <p className="text-xs text-gray-600 font-[600] truncate mt-0.5">
+                {adminData?.email}
               </p>
-              <p className="text-xs text-gray-500 truncate max-w-[160px]">
-                {adminData.email}
-              </p>
-              <motion.button
-                whileHover={{ x: 2 }}
-                onClick={handleLogout}
-                className="flex items-center text-xs text-red-500 hover:text-red-700 mt-1 transition-colors"
-              >
-                <FiLogOut className="mr-1" /> Logout
-              </motion.button>
             </motion.div>
           )}
         </motion.div>
       </div>
-
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
         <motion.div
@@ -346,7 +370,7 @@ const Sidebar = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.4)] bg-opacity-70 flex items-center justify-center p-4"
         >
           <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -356,8 +380,8 @@ const Sidebar = ({
             className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden w-full max-w-md border border-gray-200 dark:border-gray-700"
           >
             <div className="p-8 text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                <FiLogOut className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-500 dark:bg-gray-800 mb-4">
+                <FiLogOut className="h-5 w-5 text-gray-100 dark:text-gray-300" />
               </div>
 
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -372,7 +396,7 @@ const Sidebar = ({
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="px-5 py-2.5 text-sm font-medium rounded-lg bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 transition-all shadow-sm"
+                  className="px-5 py-2.5 text-sm font-medium rounded-lg cursor-pointer bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 transition-all shadow-sm"
                 >
                   Cancel
                 </motion.button>
@@ -381,7 +405,7 @@ const Sidebar = ({
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={confirmLogout}
-                  className="px-5 py-2.5 text-sm font-medium rounded-lg bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 transition-all shadow-sm"
+                  className="px-5 py-2.5 text-sm font-medium rounded-lg bg-black cursor-pointer text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 transition-all shadow-sm"
                 >
                   Logout
                 </motion.button>

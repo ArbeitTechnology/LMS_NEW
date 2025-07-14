@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
@@ -16,65 +15,28 @@ import {
 } from "react-icons/fi";
 
 const TeacherList = () => {
-  // State for teachers data
+  // State for teachers data\
+  const base_url = import.meta.env.VITE_API_KEY_Base_URL;
+
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
-
-  // Dummy data - replace with actual API call
-  const dummyTeachers = [
-    {
-      id: 1,
-      full_name: "Sarah Khan",
-      email: "sarah@example.com",
-      phone: "+8801912345678",
-      specialization: "IELTS",
-      qualifications: "MA in English, TESOL Certified",
-      status: "Approved",
-      avatar: "SK",
-      hourly_rate: 35,
-    },
-    {
-      id: 2,
-      full_name: "Alex Johnson",
-      email: "alex@example.com",
-      phone: "+8801912345679",
-      specialization: "GRE",
-      qualifications: "PhD in Mathematics",
-      status: "Pending",
-      avatar: "AJ",
-      hourly_rate: 45,
-    },
-    {
-      id: 3,
-      full_name: "Maria Garcia",
-      email: "maria@example.com",
-      phone: "+8801912345680",
-      specialization: "SAT",
-      qualifications: "BS in Education, 5 years experience",
-      status: "Approved",
-      avatar: "MG",
-      hourly_rate: 40,
-    },
-  ];
 
   // Mock API fetch function
   const fetchTeachers = async () => {
     try {
       setLoading(true);
       // Actual API call would look like this:
-      /*
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:3500/api/teachers", {
+      const res = await axios.get("http://localhost:3500/api/admin/teachers", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTeachers(res.data.teachers || []);
-      */
-
+      console.log(res.data.data);
+      setTeachers(res.data.data || []);
       // Using dummy data for now
-      setTeachers(dummyTeachers);
     } catch (error) {
+      console.log(error);
       toast.error("Failed to fetch teachers", {
         style: {
           background: "#fff",
@@ -147,7 +109,7 @@ const TeacherList = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen  text-black p-2"
+      className="min-h-screen  text-black p-6"
     >
       {/* Header Section */}
       <div className="w-full">
@@ -255,9 +217,20 @@ const TeacherList = () => {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-black text-white flex items-center justify-center font-bold">
-                            {teacher.avatar}
+                          <div className="flex-shrink-0 h-16 w-16 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold shadow-xl transition-all duration-300 hover:scale-110">
+                            {teacher?.profile_photo ? (
+                              <img
+                                src={`${base_url}/uploads/teachers/${teacher?.profile_photo}`}
+                                alt="Profile"
+                                className="w-full h-full object-cover rounded-full border-4 border-white"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center rounded-full bg-gray-200 text-3xl">
+                                <FiUser className="text-white" />
+                              </div>
+                            )}
                           </div>
+
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
                               {teacher.full_name}
@@ -322,7 +295,7 @@ const TeacherList = () => {
 
       {/* Delete Confirmation Modal */}
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)] bg-opacity-50 flex items-center justify-center z-[10000]">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -340,7 +313,7 @@ const TeacherList = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 border border-gray-300 cursor-pointer rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </motion.button>
@@ -348,7 +321,7 @@ const TeacherList = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => deleteTeacher(confirmDelete)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-4 py-2 bg-red-600 text-white cursor-pointer rounded-lg hover:bg-red-700 transition-colors"
               >
                 Delete
               </motion.button>

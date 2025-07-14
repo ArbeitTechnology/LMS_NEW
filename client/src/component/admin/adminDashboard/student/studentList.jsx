@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   FiUser,
@@ -12,95 +12,48 @@ import {
   FiChevronRight,
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import axios from "axios";
 
 const StudentList = () => {
-  // Dummy student data
-  const dummyStudents = [
-    {
-      _id: "1",
-      full_name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "+1234567890",
-      date_of_birth: "1995-05-15",
-      createdAt: "2023-01-10",
-      profile_photo: null,
-    },
-    {
-      _id: "2",
-      full_name: "Jane Smith",
-      email: "jane.smith@example.com",
-      phone: "+1987654321",
-      date_of_birth: "1998-08-22",
-      createdAt: "2023-02-15",
-      profile_photo: null,
-    },
-    {
-      _id: "3",
-      full_name: "Robert Johnson",
-      email: "robert.j@example.com",
-      phone: "+1122334455",
-      date_of_birth: "1997-03-30",
-      createdAt: "2023-03-20",
-      profile_photo: null,
-    },
-    {
-      _id: "4",
-      full_name: "Emily Davis",
-      email: "emily.d@example.com",
-      phone: "+1555666777",
-      date_of_birth: "1996-11-05",
-      createdAt: "2023-04-05",
-      profile_photo: null,
-    },
-    {
-      _id: "5",
-      full_name: "Michael Wilson",
-      email: "michael.w@example.com",
-      phone: "+1444333222",
-      date_of_birth: "1999-07-18",
-      createdAt: "2023-05-12",
-      profile_photo: null,
-    },
-    {
-      _id: "6",
-      full_name: "Sarah Brown",
-      email: "sarah.b@example.com",
-      phone: "+1666777888",
-      date_of_birth: "1994-09-25",
-      createdAt: "2023-06-08",
-      profile_photo: null,
-    },
-    {
-      _id: "7",
-      full_name: "David Taylor",
-      email: "david.t@example.com",
-      phone: "+1777888999",
-      date_of_birth: "1993-12-10",
-      createdAt: "2023-07-15",
-      profile_photo: null,
-    },
-    {
-      _id: "8",
-      full_name: "Jessica Lee",
-      email: "jessica.l@example.com",
-      phone: "+1888999000",
-      date_of_birth: "2000-02-28",
-      createdAt: "2023-08-22",
-      profile_photo: null,
-    },
-  ];
-
-  const [students, setStudents] = useState(dummyStudents);
+  const base_url = import.meta.env.VITE_API_KEY_Base_URL;
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 8;
+
+  // Fetch students from API
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${base_url}/api/admin/students`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setStudents(response.data.data);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to fetch students");
+        setLoading(false);
+        console.error(err);
+        toast.error("Failed to load students");
+      }
+    };
+
+    fetchStudents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Filter students based on search term
   const filteredStudents = students.filter(
     (student) =>
       student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.phone.toLowerCase().includes(searchTerm.toLowerCase())
+      (student.phone &&
+        student.phone.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Pagination logic
@@ -118,17 +71,55 @@ const StudentList = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const handleDelete = (id) => {
-    setStudents(students.filter((student) => student._id !== id));
-    toast.success("Student deleted successfully");
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${base_url}/api/admin/students/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      // Update the local state to remove the deleted student
+      setStudents(students.filter((student) => student._id !== id));
+      toast.success("Student deleted successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete student");
+    }
   };
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen bg-white p-6 flex justify-center items-center"
+      >
+        <div className="text-gray-500">Loading students...</div>
+      </motion.div>
+    );
+  }
+
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen bg-white p-6 flex justify-center items-center"
+      >
+        <div className="text-red-500">{error}</div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen bg-white p-2"
+      className="min-h-screen bg-white p-6"
     >
       <div className="w-full">
         {/* Header */}
@@ -207,8 +198,12 @@ const StudentList = () => {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <FiUser className="h-5 w-5 text-gray-500" />
+                          <div className="flex-shrink-0 h-16 w-16 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold shadow-md transition-all duration-300 hover:scale-110">
+                            <img
+                              src={`${base_url}/students/${student?.profile_photo}`}
+                              alt=""
+                              className="w-full h-full object-cover rounded-full border-4 border-white"
+                            />
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">

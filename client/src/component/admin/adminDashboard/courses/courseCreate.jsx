@@ -19,6 +19,7 @@ import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 
 const CourseCreator = () => {
+  const base_url = import.meta.env.VITE_API_KEY_Base_URL;
   const [courseType, setCourseType] = useState(null);
   const [courseData, setCourseData] = useState({
     title: "",
@@ -32,7 +33,6 @@ const CourseCreator = () => {
 
   const editorRefs = useRef({});
 
-  const API_URL = "https://your-api-endpoint.com/courses";
   // Toggle section expansion
   const toggleSection = (id) => {
     setExpandedSections((prev) => ({
@@ -386,6 +386,71 @@ const CourseCreator = () => {
         throw new Error("Please set a price for premium courses");
       }
 
+      // Validate content items
+      for (const item of courseData.content) {
+        if (!item.title) {
+          throw new Error(`Please add a title for all content items`);
+        }
+
+        if (item.type === "tutorial") {
+          if (courseType === "free" && !item.youtubeLink) {
+            throw new Error(
+              `Please add a YouTube link for tutorial "${item.title}"`
+            );
+          }
+          if (courseType === "premium" && !item.content) {
+            throw new Error(
+              `Please upload a video for tutorial "${item.title}"`
+            );
+          }
+        }
+
+        if (item.type === "live" && !item.meetingLink) {
+          throw new Error(
+            `Please add a meeting link for live class "${item.title}"`
+          );
+        }
+
+        if (item.type === "quiz") {
+          if (item.questions.length === 0) {
+            throw new Error(
+              `Please add at least one question to quiz "${item.title}"`
+            );
+          }
+          for (const question of item.questions) {
+            if (!question.question) {
+              throw new Error(
+                `Please add question text for all questions in quiz "${item.title}"`
+              );
+            }
+            if (["mcq-single", "mcq-multiple"].includes(question.type)) {
+              if (question.options.length < 2) {
+                throw new Error(
+                  `Please add at least 2 options for MCQ questions in quiz "${item.title}"`
+                );
+              }
+              if (
+                question.type === "mcq-single" &&
+                question.correctAnswer === undefined
+              ) {
+                throw new Error(
+                  `Please select a correct answer for all MCQ questions in quiz "${item.title}"`
+                );
+              }
+              if (
+                question.type === "mcq-multiple" &&
+                (!Array.isArray(question.correctAnswer) ||
+                  question.correctAnswer.length === 0)
+              ) {
+                throw new Error(
+                  `Please select at least one correct answer for multiple-choice questions in quiz "${item.title}"`
+                );
+              }
+            }
+          }
+        }
+      }
+
       // Prepare form data for upload
       const formData = new FormData();
       formData.append("title", courseData.title);
@@ -393,24 +458,42 @@ const CourseCreator = () => {
       formData.append("thumbnail", courseData.thumbnail);
       formData.append("type", courseType);
       formData.append("price", courseType === "premium" ? courseData.price : 0);
+      formData.append("content", JSON.stringify(courseData.content));
+      formData.append("level", "beginner"); // Default level
+      formData.append("status", "draft"); // Default status
+      formData.append("user_id", "Admin");
 
       // Add attachments
-      courseData.attachments.forEach((file, index) => {
-        formData.append(`attachments[${index}]`, file);
+      courseData.attachments.forEach((file) => {
+        formData.append("attachments", file);
       });
 
-      // Add content (simplified for example)
-      formData.append("content", JSON.stringify(courseData.content));
+      // Add content files (videos and thumbnails for premium courses)
+      if (courseType === "premium") {
+        courseData.content.forEach((item) => {
+          if (item.type === "tutorial" && item.content) {
+            formData.append("contentVideos", item.content);
+          }
+          if (item.type === "live" && item.thumbnail) {
+            formData.append("contentThumbnails", item.thumbnail);
+          }
+        });
+      }
 
       // Show loading toast
       const loadingToast = toast.loading("Publishing course...");
 
       // Make API call
-      const response = await axios.post(API_URL, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axios.post(
+        `${base_url}/api/admin/courses`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       // Success handling
       toast.dismiss(loadingToast);
@@ -443,9 +526,9 @@ const CourseCreator = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen p-2"
+      className="min-h-screen p-6"
     >
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-full mx-auto">
         {!courseType ? (
           <div className="flex flex-col items-center justify-center h-[70vh]">
             <h1 className="text-3xl font-bold text-gray-800 mb-8">
@@ -604,7 +687,8 @@ const CourseCreator = () => {
                     Attachments (PDFs, Docs, etc.)
                   </label>
                   <div className="flex items-center gap-4">
-                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors">
+                    {/* Upload button with fixed size */}
+                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors w-56 flex justify-center items-center">
                       <FiUpload className="inline mr-2" />
                       Upload Files
                       <input
@@ -614,11 +698,13 @@ const CourseCreator = () => {
                         className="hidden"
                       />
                     </label>
-                    <div className="flex flex-wrap gap-2">
+
+                    {/* Container for file names with overflow handling */}
+                    <div className="flex flex-wrap gap-2 max-h-36 overflow-auto w-full">
                       {courseData.attachments.map((file, index) => (
                         <div
                           key={index}
-                          className="bg-gray-100 px-3 py-1 rounded-lg text-sm flex items-center"
+                          className="bg-gray-100 px-3 py-1 rounded-lg text-sm flex items-center max-w-xs"
                         >
                           <span className="truncate max-w-xs">{file.name}</span>
                           <button
@@ -1095,7 +1181,21 @@ const CourseCreator = () => {
                                         (option, oIndex) => (
                                           <div
                                             key={oIndex}
-                                            className="flex items-center gap-2"
+                                            className={`flex items-center gap-2 p-2 rounded-lg ${
+                                              (question.type === "mcq-single" &&
+                                                question.correctAnswer ===
+                                                  oIndex) ||
+                                              (question.type ===
+                                                "mcq-multiple" &&
+                                                Array.isArray(
+                                                  question.correctAnswer
+                                                ) &&
+                                                question.correctAnswer.includes(
+                                                  oIndex
+                                                ))
+                                                ? "border-2 border-green-500 bg-green-50"
+                                                : "border border-gray-300"
+                                            }`}
                                           >
                                             <input
                                               type={
@@ -1122,7 +1222,11 @@ const CourseCreator = () => {
                                                   oIndex
                                                 )
                                               }
-                                              className="focus:ring-gray-500 focus:border-gray-500"
+                                              className={`focus:ring-green-500 h-4 w-4 ${
+                                                question.type === "mcq-single"
+                                                  ? "text-green-600"
+                                                  : "text-green-600"
+                                              }`}
                                             />
                                             <input
                                               type="text"
@@ -1135,10 +1239,10 @@ const CourseCreator = () => {
                                                   e.target.value
                                                 )
                                               }
+                                              className="flex-1 px-3 py-1 border-none focus:ring-0 bg-transparent"
                                               placeholder={`Option ${
                                                 oIndex + 1
                                               }`}
-                                              className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-500"
                                               required
                                             />
                                             {question.options.length > 2 && (
@@ -1163,7 +1267,7 @@ const CourseCreator = () => {
                                           onClick={() =>
                                             addOption(item.id, question.id)
                                           }
-                                          className="text-gray-600 hover:text-gray-800 flex items-center text-sm mt-2 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded"
+                                          className="text-green-600 hover:text-green-800 flex items-center text-sm mt-2 bg-green-50 hover:bg-green-100 px-3 py-1 rounded"
                                         >
                                           <FiPlus className="mr-1" /> Add Option
                                         </button>
@@ -1185,7 +1289,11 @@ const CourseCreator = () => {
                                           )
                                         }
                                         placeholder="Enter expected short answer"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-500"
+                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 ${
+                                          question.answer
+                                            ? "border-green-500 bg-green-50"
+                                            : "border-gray-300"
+                                        }`}
                                       />
                                     </div>
                                   ) : (
@@ -1193,31 +1301,39 @@ const CourseCreator = () => {
                                       <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Answer
                                       </label>
-                                      <Editor
-                                        initialValue={question.answer}
-                                        previewStyle="vertical"
-                                        height="150px"
-                                        initialEditType="wysiwyg"
-                                        useCommandShortcut={true}
-                                        plugins={[colorSyntax]}
-                                        ref={(el) =>
-                                          (editorRefs.current[
-                                            `question-${question.id}`
-                                          ] = el)
-                                        }
-                                        onChange={() => {
-                                          const markdown = editorRefs.current[
-                                            `question-${question.id}`
-                                          ]
-                                            ?.getInstance()
-                                            .getMarkdown();
-                                          handleAnswerChange(
-                                            item.id,
-                                            question.id,
-                                            markdown
-                                          );
-                                        }}
-                                      />
+                                      <div
+                                        className={`border rounded-lg ${
+                                          question.answer
+                                            ? "border-green-500 bg-green-50"
+                                            : "border-gray-300"
+                                        }`}
+                                      >
+                                        <Editor
+                                          initialValue={question.answer}
+                                          previewStyle="vertical"
+                                          height="150px"
+                                          initialEditType="wysiwyg"
+                                          useCommandShortcut={true}
+                                          plugins={[colorSyntax]}
+                                          ref={(el) =>
+                                            (editorRefs.current[
+                                              `question-${question.id}`
+                                            ] = el)
+                                          }
+                                          onChange={() => {
+                                            const markdown = editorRefs.current[
+                                              `question-${question.id}`
+                                            ]
+                                              ?.getInstance()
+                                              .getMarkdown();
+                                            handleAnswerChange(
+                                              item.id,
+                                              question.id,
+                                              markdown
+                                            );
+                                          }}
+                                        />
+                                      </div>
                                     </div>
                                   )}
                                 </div>
@@ -1227,7 +1343,7 @@ const CourseCreator = () => {
                                   onClick={() =>
                                     addQuestion(item.id, "mcq-single")
                                   }
-                                  className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm flex items-center"
+                                  className="bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1 rounded text-sm flex items-center border border-green-200"
                                 >
                                   <FiPlus className="mr-1" /> Single Choice
                                 </button>
@@ -1235,7 +1351,7 @@ const CourseCreator = () => {
                                   onClick={() =>
                                     addQuestion(item.id, "mcq-multiple")
                                   }
-                                  className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm flex items-center"
+                                  className="bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1 rounded text-sm flex items-center border border-green-200"
                                 >
                                   <FiPlus className="mr-1" /> Multiple Choice
                                 </button>
@@ -1243,7 +1359,7 @@ const CourseCreator = () => {
                                   onClick={() =>
                                     addQuestion(item.id, "short-answer")
                                   }
-                                  className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm flex items-center"
+                                  className="bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1 rounded text-sm flex items-center border border-green-200"
                                 >
                                   <FiPlus className="mr-1" /> Short Answer
                                 </button>
@@ -1251,7 +1367,7 @@ const CourseCreator = () => {
                                   onClick={() =>
                                     addQuestion(item.id, "broad-answer")
                                   }
-                                  className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm flex items-center"
+                                  className="bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1 rounded text-sm flex items-center border border-green-200"
                                 >
                                   <FiPlus className="mr-1" /> Broad Answer
                                 </button>

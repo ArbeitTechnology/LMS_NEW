@@ -36,22 +36,7 @@ const App = () => {
         <Route path="/admin/forgotPassword" element={<ForgotPassword />} />
         <Route path="/admin/reset-password" element={<ResetPassword />} />
 
-        <Route
-          path="/admin/dashboard"
-          element={
-            isAuthenticated() ? (
-              role === "admin" ? (
-                <AdminDashboard />
-              ) : role === "subadmin" ? (
-                <AdminDashboard />
-              ) : (
-                <Navigate to="/admin" replace />
-              )
-            ) : (
-              <Navigate to="/admin" replace />
-            )
-          }
-        />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
         {/* <Route path="*" element={<Navigate to="/admin" replace />} /> */}
         {/* Teacher route */}

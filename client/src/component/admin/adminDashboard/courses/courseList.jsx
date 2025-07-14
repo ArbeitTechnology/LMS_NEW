@@ -1,71 +1,57 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { FiEdit2, FiTrash2, FiUser, FiSearch, FiFilter } from "react-icons/fi";
 import { motion } from "framer-motion";
-
-// Demo data - replace with API calls in production
-const demoCourses = [
-  {
-    id: 1,
-    title: "Introduction to React",
-    description: "Learn the fundamentals of React.js",
-    thumbnail: "https://via.placeholder.com/150",
-    price: 49.99,
-    type: "premium",
-    teacher: { id: 1, name: "John Doe" },
-    students: 125,
-    createdAt: "2023-05-15",
-  },
-  {
-    id: 2,
-    title: "Advanced JavaScript",
-    description: "Master advanced JavaScript concepts",
-    thumbnail: "https://via.placeholder.com/150",
-    price: 0,
-    type: "free",
-    teacher: { id: 2, name: "Jane Smith" },
-    students: 89,
-    createdAt: "2023-06-20",
-  },
-  {
-    id: 3,
-    title: "UI/UX Design Principles",
-    description: "Learn modern UI/UX design techniques",
-    thumbnail: "https://via.placeholder.com/150",
-    price: 79.99,
-    type: "premium",
-    teacher: { id: 3, name: "Alex Johnson" },
-    students: 64,
-    createdAt: "2023-07-10",
-  },
-];
-
-const demoTeachers = [
-  { id: 1, name: "John Doe" },
-  { id: 2, name: "Jane Smith" },
-  { id: 3, name: "Alex Johnson" },
-  { id: 4, name: "Sarah Williams" },
-  { id: 5, name: "Michael Brown" },
-];
-
+import axios from "axios";
+import { toast } from "react-hot-toast";
 const CourseList = () => {
+  const base_url = import.meta.env.VITE_API_KEY_Base_URL;
   const [courses, setCourses] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [editingCourse, setEditingCourse] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Load demo data - replace with API calls
-  useEffect(() => {
-    // Simulate API loading
-    const timer = setTimeout(() => {
-      setCourses(demoCourses);
-      setTeachers(demoTeachers);
+  // Fetch courses from API
+  const fetchCourses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`${base_url}/api/admin/courses`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setCourses(response.data.data);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+      setError("Failed to load courses. Please try again later.");
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
+  };
 
-    return () => clearTimeout(timer);
+  // Fetch teachers from API (you might need to create this endpoint)
+  const fetchTeachers = async () => {
+    try {
+      const response = await axios.get(`${base_url}/api/admin/teachers`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setTeachers(response.data.data);
+    } catch (err) {
+      console.error("Error fetching teachers:", err);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchCourses();
+    fetchTeachers();
   }, []);
 
   // Filter courses based on search and filter
@@ -78,27 +64,47 @@ const CourseList = () => {
   });
 
   // Handle assigning teacher to course
-  const assignTeacher = (courseId, teacherId) => {
-    // In a real app, you would make an API call here
-    // Example: await axios.patch(`/api/courses/${courseId}`, { teacherId });
+  const assignTeacher = async (courseId, teacherId) => {
+    try {
+      // Ensure courseId is valid
+      if (!courseId) {
+        toast.error("Course ID is missing.");
+        return;
+      }
 
-    setCourses(
-      courses.map((course) => {
-        if (course.id === courseId) {
-          const teacher = teachers.find((t) => t.id === teacherId);
-          return { ...course, teacher };
+      const response = await axios.patch(
+        `${base_url}/api/admin/courses/${courseId}`,
+        { instructor: teacherId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-        return course;
-      })
-    );
+      );
+
+      if (response.data.success) {
+        toast.success("Teacher Assigned!");
+        fetchCourses();
+      }
+    } catch (err) {
+      console.error("Error assigning teacher:", err);
+      setError("Failed to assign teacher. Please try again.");
+    }
   };
 
   // Handle deleting a course
-  const deleteCourse = (courseId) => {
-    // In a real app, you would make an API call here
-    // Example: await axios.delete(`/api/courses/${courseId}`);
-
-    setCourses(courses.filter((course) => course.id !== courseId));
+  const deleteCourse = async (courseId) => {
+    try {
+      await axios.delete(`${base_url}/api/admin/courses/${courseId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      fetchCourses(); // Refresh the course list after deletion
+    } catch (err) {
+      console.error("Error deleting course:", err);
+      setError("Failed to delete course. Please try again.");
+    }
   };
 
   // Handle starting course edit
@@ -107,17 +113,26 @@ const CourseList = () => {
   };
 
   // Handle saving edited course
-  const saveEdit = () => {
-    // In a real app, you would make an API call here
-    // Example: await axios.put(`/api/courses/${editingCourse.id}`, editingCourse);
-
-    setCourses(
-      courses.map((course) =>
-        course.id === editingCourse.id ? editingCourse : course
-      )
-    );
-    setEditingCourse(null);
+  const saveEdit = async () => {
+    try {
+      await axios.put(
+        `${base_url}/api/admin/courses/${editingCourse._id}`,
+        editingCourse,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      fetchCourses(); // Refresh the course list
+      setEditingCourse(null);
+    } catch (err) {
+      console.error("Error updating course:", err);
+      setError("Failed to update course. Please try again.");
+    }
   };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -129,14 +144,34 @@ const CourseList = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <p className="text-red-500 text-lg">{error}</p>
+          <button
+            onClick={fetchCourses}
+            className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen  p-2">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen p-8">
+      <div className="max-w-full mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="w-full mb-6 pb-4 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-900 text-left">
             Course Management
           </h1>
+          <p className="text-gray-600 mt-2">
+            Streamline course creation and assign qualified instructors to
+            ensure high-quality learning.
+          </p>
         </div>
 
         {/* Search and Filter */}
@@ -156,7 +191,7 @@ const CourseList = () => {
           <div className="flex items-center gap-2">
             <FiFilter className="text-gray-600" />
             <select
-              className="border border-gray-300 rounded-lg px-3 py-2  focus:border-gray-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:border-gray-500"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
             >
@@ -178,7 +213,7 @@ const CourseList = () => {
           ) : (
             filteredCourses.map((course) => (
               <motion.div
-                key={course.id}
+                key={course._id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
@@ -189,7 +224,7 @@ const CourseList = () => {
                     {/* Course Thumbnail */}
                     <div className="w-full md:w-48 h-32 bg-gray-100 rounded-lg overflow-hidden">
                       <img
-                        src={course.thumbnail}
+                        src={`${base_url}/courses/${course.thumbnail.path}`}
                         alt={course.title}
                         className="w-full h-full object-cover"
                       />
@@ -214,7 +249,7 @@ const CourseList = () => {
                             <FiEdit2 />
                           </button>
                           <button
-                            onClick={() => deleteCourse(course.id)}
+                            onClick={() => deleteCourse(course._id)}
                             className="text-gray-600 hover:text-red-500 p-2 rounded-full hover:bg-gray-100"
                           >
                             <FiTrash2 />
@@ -227,15 +262,15 @@ const CourseList = () => {
                           <FiUser className="text-gray-500 mr-2" />
                           <select
                             className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-gray-500"
-                            value={course.teacher?.id || ""}
+                            value={course.instructor?._id || ""}
                             onChange={(e) =>
-                              assignTeacher(course.id, parseInt(e.target.value))
+                              assignTeacher(course._id, e.target.value)
                             }
                           >
                             <option value="">Select Teacher</option>
                             {teachers.map((teacher) => (
                               <option key={teacher.id} value={teacher.id}>
-                                {teacher.name}
+                                {teacher.full_name}
                               </option>
                             ))}
                           </select>
@@ -254,7 +289,7 @@ const CourseList = () => {
                         </div>
 
                         <div className="text-sm text-gray-500">
-                          {course.students} students
+                          {course.studentsEnrolled?.length || 0} students
                         </div>
 
                         <div className="text-sm text-gray-500">
@@ -305,7 +340,7 @@ const CourseList = () => {
                     Description
                   </label>
                   <textarea
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg  focus:border-gray-500"
                     rows="3"
                     value={editingCourse.description}
                     onChange={(e) =>
@@ -319,21 +354,43 @@ const CourseList = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Price
+                    Type
                   </label>
-                  <input
-                    type="number"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
-                    value={editingCourse.price}
+                  <select
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-gray-500"
+                    value={editingCourse.type}
                     onChange={(e) =>
                       setEditingCourse({
                         ...editingCourse,
-                        price: parseFloat(e.target.value),
+                        type: e.target.value,
+                        price:
+                          e.target.value === "free" ? 0 : editingCourse.price,
                       })
                     }
-                    disabled={editingCourse.type === "free"}
-                  />
+                  >
+                    <option value="free">Free</option>
+                    <option value="premium">Premium</option>
+                  </select>
                 </div>
+
+                {editingCourse.type === "premium" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Price
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                      value={editingCourse.price}
+                      onChange={(e) =>
+                        setEditingCourse({
+                          ...editingCourse,
+                          price: parseFloat(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-3 pt-4">
                   <button

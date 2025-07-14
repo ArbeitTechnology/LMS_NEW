@@ -9,12 +9,12 @@ const SubadminCreate = () => {
   const [form, setForm] = useState({
     username: "",
     email: "",
-    password: ""
+    password: "",
   });
   const [errors, setErrors] = useState({
     username: "",
     email: "",
-    password: ""
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,12 +82,12 @@ const SubadminCreate = () => {
         "http://localhost:3500/api/auth/subadmin",
         {
           ...form,
-          email: form.email.toLowerCase()
+          email: form.email.toLowerCase(),
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -96,12 +96,12 @@ const SubadminCreate = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
         },
         iconTheme: {
           primary: "#000",
-          secondary: "#fff"
-        }
+          secondary: "#fff",
+        },
       });
 
       setForm({ username: "", email: "", password: "" });
@@ -112,12 +112,12 @@ const SubadminCreate = () => {
           background: "#fff",
           color: "#000",
           border: "1px solid #e5e7eb",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
         },
         iconTheme: {
           primary: "#ff0000",
-          secondary: "#ffffff"
-        }
+          secondary: "#ffffff",
+        },
       });
     } finally {
       setIsSubmitting(false);
@@ -129,24 +129,24 @@ const SubadminCreate = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen flex flex-col p-2"
+      className="min-h-screen w-full flex flex-col p-6"
     >
       {/* New Header Section */}
-      <div className="flex justify-between items-center mb-8 pb-6 border-b border-gray-200">
+      <div className="flex justify-between sticky top-0 left-0 py-4 px-[10px] bg-white items-center mb-8  border-b border-gray-200">
         <h2 className="text-2xl font-bold text-black">Sub-Admin Creation</h2>
       </div>
 
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
-        className="w-full "
+        className="w-full p-[10px]"
       >
         <motion.form
           onSubmit={handleSubmit}
-          className="bg-white rounded-xl shadow-xl p-8 border border-gray-100 overflow-hidden"
+          className="bg-white rounded-[10px] shadow-sm p-8 border border-gray-200 overflow-hidden"
         >
           <div className="mb-8 text-center">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            <h2 className="text-[20px] md:text-[26px] font-[800] text-gray-800 mb-2">
               Add New Sub-Admin
             </h2>
             <p className="text-gray-600">
@@ -157,7 +157,7 @@ const SubadminCreate = () => {
           <div className="space-y-6">
             {/* Username Field */}
             <div className="space-y-2">
-              <label className="flex items-center text-sm font-medium text-gray-700">
+              <label className="flex items-center text-[18px] font-medium text-gray-700">
                 <FiUser className="mr-2 text-gray-500" /> Username
               </label>
               <input
@@ -167,8 +167,8 @@ const SubadminCreate = () => {
                 onBlur={handleBlur}
                 placeholder="Enter username"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.username ? "border-red-500" : "border-gray-500"
-                } focus:ring-2 focus:ring-black focus:border-gray-600`}
+                  errors.username ? "border-red-500" : "border-gray-300"
+                } focus:ring-2 focus:ring-black focus:border-gray-600 `}
               />
               {errors.username && (
                 <motion.p
@@ -183,7 +183,7 @@ const SubadminCreate = () => {
 
             {/* Email Field */}
             <div className="space-y-2">
-              <label className="flex items-center text-sm font-medium text-gray-700">
+              <label className="flex items-center text-[18px] font-medium text-gray-700">
                 <FiMail className="mr-2 text-gray-500" /> Email
               </label>
               <input
@@ -194,7 +194,7 @@ const SubadminCreate = () => {
                 onBlur={handleBlur}
                 placeholder="Enter email address"
                 className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.email ? "border-red-500" : "border-gray-500"
+                  errors.email ? "border-red-500" : "border-gray-300"
                 } focus:ring-2 focus:ring-black focus:border-gray-600`}
               />
               {errors.email && (
@@ -210,7 +210,7 @@ const SubadminCreate = () => {
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label className="flex items-center text-sm font-medium text-gray-700">
+              <label className="flex items-center text-[18px] font-medium text-gray-700">
                 <FiLock className="mr-2 text-gray-500" /> Password
               </label>
               <div className="relative">
@@ -222,7 +222,7 @@ const SubadminCreate = () => {
                   onBlur={handleBlur}
                   placeholder="Enter secure password"
                   className={`w-full px-4 py-3 rounded-lg border ${
-                    errors.password ? "border-red-500" : "border-gray-500"
+                    errors.password ? "border-red-500" : "border-gray-300"
                   } focus:ring-2 focus:ring-black focus:border-gray-600 pr-10`}
                   required
                   minLength="8"
@@ -256,7 +256,7 @@ const SubadminCreate = () => {
             whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isSubmitting}
-            className={`w-full mt-8 py-3 px-4 rounded-lg font-medium text-white ${
+            className={`w-full mt-8 py-3 px-4 cursor-pointer rounded-lg font-medium text-white ${
               isSubmitting ? "bg-gray-600" : "bg-black hover:bg-gray-800"
             } transition-all shadow-md flex items-center justify-center`}
           >

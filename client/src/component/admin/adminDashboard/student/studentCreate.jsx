@@ -103,89 +103,98 @@ const StudentAuth = () => {
     return isValid;
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+const handleRegister = async (e) => {
+  e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error("Please fix all errors before submitting");
-      return;
+  if (!validateForm()) {
+    toast.error("Please fix all errors before submitting");
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    const formData = new FormData();
+
+    // Append all form fields
+    for (const [key, value] of Object.entries(form)) {
+      if (value) formData.append(key, value);
     }
 
-    setIsSubmitting(true);
+    // Append profile photo if exists
+    if (files.profile_photo) {
+      formData.append("profile_photo", files.profile_photo);
+    }
 
-    try {
-      const formData = new FormData();
+    // Debug: Log FormData contents
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
 
-      // Append all form fields
-      Object.entries(form).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
-
-      // Append profile photo if exists
-      if (files.profile_photo) {
-        formData.append("profile_photo", files.profile_photo);
+    // API call to register student
+    const response = await axios.post(
+      "http://localhost:3500/api/admin/students",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       }
+    );
 
-      // API call to register student
-      const response = await axios.post(
-        "http://localhost:3500/api/auth/student-register",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+    if (response.data && response.data.success) {
+      toast.success(
+        response.data.message ||
+          "Registration successful! Please check your email for verification."
       );
+      // Reset form after successful registration
+      setForm({
+        email: "",
+        password: "",
+        full_name: "",
+        phone: "",
+        date_of_birth: "",
+        address: "",
+      });
+      setFiles({
+        profile_photo: null,
+      });
+    } else {
+      throw new Error("Unexpected response format");
+    }
+  } catch (err) {
+    let errorMessage = "Registration failed";
 
-      if (response.data.success) {
-        toast.success(
-          response.data.message ||
-            "Registration successful! Please check your email for verification."
-        );
-        // Reset form after successful registration
-        setForm({
-          email: "",
-          password: "",
-          full_name: "",
-          phone: "",
-          date_of_birth: "",
-          address: "",
-        });
-        setFiles({
-          profile_photo: null,
-        });
-      }
-    } catch (err) {
-      let errorMessage = "Registration failed";
-
-      if (err.response) {
-        // Handle server validation errors
-        if (
-          err.response.data.message &&
-          Array.isArray(err.response.data.message)
-        ) {
+    if (err.response) {
+      // Handle server validation errors
+      if (err.response.data) {
+        if (Array.isArray(err.response.data.message)) {
           errorMessage = err.response.data.message.join(", ");
         } else if (err.response.data.message) {
           errorMessage = err.response.data.message;
+        } else if (err.response.data.error) {
+          errorMessage = err.response.data.error;
         }
-      } else if (err.message) {
-        errorMessage = err.message;
       }
-
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
+    } else if (err.message) {
+      errorMessage = err.message;
     }
-  };
+
+    toast.error(errorMessage);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen flex flex-col items-center p-2 "
+      className="min-h-screen flex flex-col items-center p-6 "
     >
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-full">
         <div className="w-full mb-8 pb-6 border-b border-gray-200">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             Student Registration

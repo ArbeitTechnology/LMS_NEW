@@ -9,6 +9,7 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiLogOut,
+  FiLayers,
 } from "react-icons/fi";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -82,7 +83,15 @@ const Sidebar = ({ activeView, setActiveView }) => {
 
   const baseNavItems = [
     { name: "dashboard", icon: <FiHome />, component: "dashboard" },
-
+    {
+      name: "Courses",
+      icon: <FiLayers />,
+      children: [
+        { name: "Course List", component: "courseList" },
+        { name: "Course Cart", component: "cart" },
+        { name: "My Courses", component: "myCourses" },
+      ],
+    },
     {
       name: "notifications",
       icon: (

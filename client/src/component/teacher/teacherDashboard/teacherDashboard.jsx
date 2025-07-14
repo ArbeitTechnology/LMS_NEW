@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import Sidebar from "./sidebar";
 import TeacherSettings from "./settings";
+import CourseCreator from "./courses/createCourse";
+import CourseList from "./courses/courseList";
 
 const TeacherDashboard = () => {
   const [activeView, setActiveView] = useState("dashboard");
@@ -8,6 +10,10 @@ const TeacherDashboard = () => {
     switch (activeView) {
       case "settings":
         return <TeacherSettings />;
+      case "createCourse":
+        return <CourseCreator />;
+      case "courseList":
+        return <CourseList />;
       default:
         return <h1 className="p-6 text-xl font-bold">Dashboard Overview</h1>;
     }

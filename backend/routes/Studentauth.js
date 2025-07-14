@@ -8,7 +8,7 @@ const Studnetauth = express.Router();
 
 // Nodemailer transporter configuration
 const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail',
+  service: process.env.EMAIL_SERVICE || "gmail",
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -27,7 +27,7 @@ const sendOTPEmail = async (email, otp) => {
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: email,
-    subject: 'Verify Your Student Account',
+    subject: "Verify Your Student Account",
     text: `Your OTP for account verification is: ${otp}\nThis OTP will expire in 10 minutes.`,
     html: `
       <div>
@@ -46,7 +46,7 @@ const sendPasswordResetEmail = async (email, resetURL) => {
   const mailOptions = {
     from: process.env.EMAIL_FROM,
     to: email,
-    subject: 'Your Password Reset Token (Valid for 10 min)',
+    subject: "Your Password Reset Token (Valid for 10 min)",
     text: `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email!`,
     html: `
       <div>
@@ -62,16 +62,16 @@ const sendPasswordResetEmail = async (email, resetURL) => {
 };
 
 // Student Registration
-Studnetauth.post('/register', async (req, res) => {
+Studnetauth.post("/register", async (req, res) => {
   try {
     const { email, password, full_name, phone } = req.body;
-
+    console.log(req.body)
     // Check if student already exists
-    const existingStudent = await Student.findOne({ email });
+    const existingStudent = await Student.findOne({ email:req.body.email });
     if (existingStudent) {
       return res.status(400).json({
-        status: 'fail',
-        message: 'Student already exists with this email',
+        status: "fail",
+        message: "Student already exists with this email",
       });
     }
 
@@ -97,22 +97,23 @@ Studnetauth.post('/register', async (req, res) => {
     newStudent.password = undefined;
 
     res.status(201).json({
-      status: 'success',
-      message: 'OTP sent to your email for verification',
+      status: "success",
+      message: "OTP sent to your email for verification",
       data: {
         student: newStudent,
       },
     });
   } catch (err) {
+    console.log(err)
     res.status(400).json({
-      status: 'fail',
+      status: "fail",
       message: err.message,
     });
   }
 });
 
 // Verify OTP
-Studnetauth.post('/verify-otp', async (req, res) => {
+Studnetauth.post("/verify-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -125,8 +126,8 @@ Studnetauth.post('/verify-otp', async (req, res) => {
 
     if (!student) {
       return res.status(400).json({
-        status: 'fail',
-        message: 'Invalid OTP or OTP expired',
+        status: "fail",
+        message: "Invalid OTP or OTP expired",
       });
     }
 
@@ -140,8 +141,8 @@ Studnetauth.post('/verify-otp', async (req, res) => {
     const token = signToken(student._id);
 
     res.status(200).json({
-      status: 'success',
-      message: 'Account verified successfully',
+      status: "success",
+      message: "Account verified successfully",
       token,
       data: {
         student,
@@ -149,38 +150,37 @@ Studnetauth.post('/verify-otp', async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({
-      status: 'fail',
+      status: "fail",
       message: err.message,
     });
   }
 });
 
 // Student Login
-Studnetauth.post('/login', async (req, res) => {
+Studnetauth.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
-        status: 'fail',
-        message: 'Please provide email and password',
+        status: "fail",
+        message: "Please provide email and password",
       });
     }
 
-
-    const student = await Student.findOne({ email }).select('+password');
+    const student = await Student.findOne({ email }).select("+password");
 
     if (!student || !(await student.correctPassword(password))) {
       return res.status(401).json({
-        status: 'fail',
-        message: 'Incorrect email or password',
+        status: "fail",
+        message: "Incorrect email or password",
       });
     }
 
     if (student.is_active !== "active") {
       return res.status(401).json({
-        status: 'fail',
-        message: 'Account not verified. Please verify your email first.',
+        status: "fail",
+        message: "Account not verified. Please verify your email first.",
       });
     }
 
@@ -192,7 +192,7 @@ Studnetauth.post('/login', async (req, res) => {
     student.password = undefined;
 
     res.status(200).json({
-      status: 'success',
+      status: "success",
       token,
       data: {
         student,
@@ -200,22 +200,22 @@ Studnetauth.post('/login', async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({
-      status: 'fail',
+      status: "fail",
       message: err.message,
     });
   }
 });
 
 // Student Forget Password
-Studnetauth.post('/student-forget-password', async (req, res) => {
+Studnetauth.post("/student-forget-password", async (req, res) => {
   const { email } = req.body;
 
   try {
     const student = await Student.findOne({ email });
     if (!student) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "If this email is registered, you'll receive a reset OTP." 
+      return res.status(404).json({
+        success: false,
+        message: "If this email is registered, you'll receive a reset OTP.",
       });
     }
 
@@ -238,21 +238,21 @@ Studnetauth.post('/student-forget-password', async (req, res) => {
       `,
     });
 
-    res.json({ 
-      success: true, 
-      message: "OTP sent to registered email." 
+    res.json({
+      success: true,
+      message: "OTP sent to registered email.",
     });
   } catch (error) {
-    console.error('Forgot password error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: "Could not process request. Please try again." 
+    console.error("Forgot password error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Could not process request. Please try again.",
     });
   }
 });
 
 // Student Verify OTP
-Studnetauth.post('/student-verify-otp', async (req, res) => {
+Studnetauth.post("/student-verify-otp", async (req, res) => {
   const { email, otp } = req.body;
 
   try {
@@ -263,27 +263,27 @@ Studnetauth.post('/student-verify-otp', async (req, res) => {
     });
 
     if (!student) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid or expired OTP. Please request a new one." 
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP. Please request a new one.",
       });
     }
 
-    res.json({ 
-      success: true, 
-      message: "OTP verified successfully." 
+    res.json({
+      success: true,
+      message: "OTP verified successfully.",
     });
   } catch (error) {
-    console.error('Verify OTP error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: "Could not verify OTP. Please try again." 
+    console.error("Verify OTP error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Could not verify OTP. Please try again.",
     });
   }
 });
 
 // Student Reset Password
-Studnetauth.post('/student-reset-password', async (req, res) => {
+Studnetauth.post("/student-reset-password", async (req, res) => {
   const { email, otp, newPassword } = req.body;
 
   try {
@@ -295,9 +295,10 @@ Studnetauth.post('/student-reset-password', async (req, res) => {
     });
 
     if (!student) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid or expired OTP. Please start the reset process again." 
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid or expired OTP. Please start the reset process again.",
       });
     }
 
@@ -343,15 +344,16 @@ Studnetauth.post('/student-reset-password', async (req, res) => {
       `,
     });
 
-    res.json({ 
-      success: true, 
-      message: "Password reset successful. You can now login with your new password." 
+    res.json({
+      success: true,
+      message:
+        "Password reset successful. You can now login with your new password.",
     });
   } catch (error) {
-    console.error('Reset password error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: "Could not reset password. Please try again." 
+    console.error("Reset password error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Could not reset password. Please try again.",
     });
   }
 });

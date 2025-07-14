@@ -1,15 +1,35 @@
 import React, { useState } from "react";
 import Sidebar from "./sidebar";
 import Settings from "./settings";
+import CourseList from "./courses/coursesList";
+import Cart from "./courses/cart";
+import MyCourses from "./courses/myCOurses";
 
 const StudentDashboard = () => {
   const [activeView, setActiveView] = useState("dashboard");
+
   const renderView = () => {
     switch (activeView) {
       case "settings":
         return <Settings />;
+      case "courseList":
+        return <CourseList setActiveView={setActiveView} />;
+      case "cart":
+        return <Cart setActiveView={setActiveView} />;
+      case "myCourses":
+        return <MyCourses setActiveView={setActiveView} />;
       default:
-        return <h1 className="p-6 text-xl font-bold">Dashboard Overview</h1>;
+        return (
+          <div className="p-6">
+            <h1 className="text-2xl font-bold text-gray-800">
+              Dashboard Overview
+            </h1>
+            <p className="mt-2 text-gray-600">
+              Welcome to your student dashboard. Use the sidebar to manage your
+              courses and account settings.
+            </p>
+          </div>
+        );
     }
   };
 
