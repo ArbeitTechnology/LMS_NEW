@@ -3,6 +3,9 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FiCreditCard, FiLock, FiCheckCircle, FiShield } from "react-icons/fi";
 import toast from "react-hot-toast";
+import axios from "axios";
+import Cards from "react-credit-cards";
+import "react-credit-cards/es/styles-compiled.css";
 
 const Checkout = ({ cart, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -12,6 +15,7 @@ const Checkout = ({ cart, onSuccess }) => {
     expiry: "",
     cvc: "",
     name: "",
+    focused: "",
   });
   const [billingDetails, setBillingDetails] = useState({
     firstName: "",
@@ -19,7 +23,7 @@ const Checkout = ({ cart, onSuccess }) => {
     email: "",
     address: "",
     city: "",
-    country: "US",
+    country: "BN",
     zipCode: "",
   });
 
@@ -32,14 +36,46 @@ const Checkout = ({ cart, onSuccess }) => {
     setLoading(true);
 
     try {
-      // Simulate API call
+      // Prepare payment data
+      const paymentData = {
+        paymentMethod,
+        cardDetails: paymentMethod === "card" ? cardDetails : null,
+        billingDetails,
+        amount: total,
+        items: cart.map((item) => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+        })),
+      };
+
+      /* 
+      // REAL API INTEGRATION EXAMPLE (uncomment and modify as needed)
+      const response = await axios.post('https://your-api-endpoint.com/payments', paymentData, {
+        headers: {
+          'Authorization': 'Bearer your-auth-token-if-needed',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Handle successful payment
+      if (response.data.success) {
+        toast.success("Payment successful!");
+        onSuccess();
+      } else {
+        throw new Error(response.data.message || "Payment failed");
+      }
+      */
+
+      // MOCK API CALL (for testing - remove in production)
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Call success handler from parent
+      // Simulate successful payment
+      toast.success("Payment successful!");
       onSuccess();
     } catch (error) {
       console.error("Payment error:", error);
-      toast.error("Payment failed. Please try again.");
+      toast.error(error.message || "Payment failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -71,6 +107,41 @@ const Checkout = ({ cart, onSuccess }) => {
     return value;
   };
 
+  // Get card type based on number
+  const getCardType = (number) => {
+    const num = number.replace(/\D/g, "");
+    if (/^4/.test(num)) return "visa";
+    if (/^5[1-5]/.test(num)) return "mastercard";
+    if (/^3[47]/.test(num)) return "amex";
+    if (/^6(?:011|5)/.test(num)) return "discover";
+    if (/^(?:2131|1800|35)/.test(num)) return "jcb";
+    if (/^3(?:0[0-5]|[68])/.test(num)) return "diners";
+    return "unknown";
+  };
+
+  // Get card icon based on type
+  const getCardIcon = (type) => {
+    switch (type) {
+      case "visa":
+        return "https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg";
+      case "mastercard":
+        return "https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg";
+      case "amex":
+        return "https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg";
+      case "discover":
+        return "https://upload.wikimedia.org/wikipedia/commons/5/57/Discover_Card_logo.svg";
+      case "jcb":
+        return "https://upload.wikimedia.org/wikipedia/commons/4/40/JCB_logo.svg";
+      case "diners":
+        return "https://upload.wikimedia.org/wikipedia/commons/2/24/Diners_Club_International_logo.svg";
+      default:
+        return null;
+    }
+  };
+
+  const cardType = getCardType(cardDetails.number);
+  const cardIcon = getCardIcon(cardType);
+
   return (
     <div className="p-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -84,7 +155,7 @@ const Checkout = ({ cart, onSuccess }) => {
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
             >
               <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                <FiCreditCard className="mr-2 text-indigo-600" />
+                <FiCreditCard className="mr-2 text-gray-600" />
                 Payment Method
               </h2>
 
@@ -96,7 +167,7 @@ const Checkout = ({ cart, onSuccess }) => {
                   onClick={() => setPaymentMethod("card")}
                   className={`p-4 rounded-xl border-2 ${
                     paymentMethod === "card"
-                      ? "border-indigo-500 bg-indigo-50"
+                      ? "border-gray-500 bg-gray-50"
                       : "border-gray-200 hover:border-gray-300"
                   } transition-all flex items-center justify-center`}
                 >
@@ -104,7 +175,7 @@ const Checkout = ({ cart, onSuccess }) => {
                     <div
                       className={`w-5 h-5 rounded-full border-2 ${
                         paymentMethod === "card"
-                          ? "border-indigo-500 bg-indigo-500"
+                          ? "border-gray-500 bg-gray-500"
                           : "border-gray-300"
                       } flex items-center justify-center mr-3`}
                     >
@@ -123,7 +194,7 @@ const Checkout = ({ cart, onSuccess }) => {
                   onClick={() => setPaymentMethod("paypal")}
                   className={`p-4 rounded-xl border-2 ${
                     paymentMethod === "paypal"
-                      ? "border-indigo-500 bg-indigo-50"
+                      ? "border-gray-500 bg-gray-50"
                       : "border-gray-200 hover:border-gray-300"
                   } transition-all flex items-center justify-center`}
                 >
@@ -131,7 +202,7 @@ const Checkout = ({ cart, onSuccess }) => {
                     <div
                       className={`w-5 h-5 rounded-full border-2 ${
                         paymentMethod === "paypal"
-                          ? "border-indigo-500 bg-indigo-500"
+                          ? "border-gray-500 bg-gray-500"
                           : "border-gray-300"
                       } flex items-center justify-center mr-3`}
                     >
@@ -149,100 +220,141 @@ const Checkout = ({ cart, onSuccess }) => {
               </div>
 
               {paymentMethod === "card" && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Card Number *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="1234 5678 9012 3456"
-                        value={formatCardNumber(cardDetails.number)}
-                        onChange={(e) =>
-                          setCardDetails({
-                            ...cardDetails,
-                            number: e.target.value,
-                          })
-                        }
-                        maxLength={19}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
-                        required
-                      />
-                      <div className="absolute right-3 top-3">
-                        <div className="flex space-x-1">
-                          <div className="w-8 h-5 bg-gray-200 rounded-sm"></div>
-                          <div className="w-8 h-5 bg-gray-200 rounded-sm"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Expiry Date *
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        value={formatExpiry(cardDetails.expiry)}
-                        onChange={(e) =>
-                          setCardDetails({
-                            ...cardDetails,
-                            expiry: e.target.value,
-                          })
-                        }
-                        maxLength={5}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        CVC *
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="123"
-                        value={cardDetails.cvc}
-                        onChange={(e) =>
-                          setCardDetails({
-                            ...cardDetails,
-                            cvc: e.target.value.replace(/\D/g, "").slice(0, 4),
-                          })
-                        }
-                        maxLength={4}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Name on Card *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="John Doe"
-                      value={cardDetails.name}
-                      onChange={(e) =>
-                        setCardDetails({
-                          ...cardDetails,
-                          name: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
-                      required
+                <>
+                  <div className="mb-6">
+                    <Cards
+                      number={cardDetails.number}
+                      name={cardDetails.name}
+                      expiry={cardDetails.expiry}
+                      cvc={cardDetails.cvc}
+                      focused={cardDetails.focused}
                     />
                   </div>
-                </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Card Number *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="1234 5678 9012 3456"
+                          value={formatCardNumber(cardDetails.number)}
+                          onChange={(e) =>
+                            setCardDetails({
+                              ...cardDetails,
+                              number: e.target.value,
+                            })
+                          }
+                          onFocus={() =>
+                            setCardDetails({
+                              ...cardDetails,
+                              focused: "number",
+                            })
+                          }
+                          maxLength={19}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
+                          required
+                        />
+                        {cardIcon && (
+                          <div className="absolute right-3 top-3">
+                            <img
+                              src={cardIcon}
+                              alt={cardType}
+                              className="h-6"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      {cardDetails.number && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {cardType.charAt(0).toUpperCase() + cardType.slice(1)}{" "}
+                          {cardType !== "unknown" ? "card" : ""}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Expiry Date *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="MM/YY"
+                          value={formatExpiry(cardDetails.expiry)}
+                          onChange={(e) =>
+                            setCardDetails({
+                              ...cardDetails,
+                              expiry: e.target.value,
+                            })
+                          }
+                          onFocus={() =>
+                            setCardDetails({
+                              ...cardDetails,
+                              focused: "expiry",
+                            })
+                          }
+                          maxLength={5}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          CVC *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="123"
+                          value={cardDetails.cvc}
+                          onChange={(e) =>
+                            setCardDetails({
+                              ...cardDetails,
+                              cvc: e.target.value
+                                .replace(/\D/g, "")
+                                .slice(0, 4),
+                            })
+                          }
+                          onFocus={() =>
+                            setCardDetails({ ...cardDetails, focused: "cvc" })
+                          }
+                          maxLength={4}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Name on Card *
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="John Doe"
+                        value={cardDetails.name}
+                        onChange={(e) =>
+                          setCardDetails({
+                            ...cardDetails,
+                            name: e.target.value,
+                          })
+                        }
+                        onFocus={() =>
+                          setCardDetails({ ...cardDetails, focused: "name" })
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
+                        required
+                      />
+                    </div>
+                  </motion.div>
+                </>
               )}
             </motion.div>
 
@@ -254,7 +366,7 @@ const Checkout = ({ cart, onSuccess }) => {
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
             >
               <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                <FiCheckCircle className="mr-2 text-indigo-600" />
+                <FiCheckCircle className="mr-2 text-gray-600" />
                 Billing Information
               </h2>
 
@@ -272,7 +384,7 @@ const Checkout = ({ cart, onSuccess }) => {
                         firstName: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
                     required
                   />
                 </div>
@@ -289,7 +401,7 @@ const Checkout = ({ cart, onSuccess }) => {
                         lastName: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
                     required
                   />
                 </div>
@@ -306,7 +418,7 @@ const Checkout = ({ cart, onSuccess }) => {
                         email: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
                     required
                   />
                 </div>
@@ -323,7 +435,7 @@ const Checkout = ({ cart, onSuccess }) => {
                         address: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
                     required
                   />
                 </div>
@@ -340,7 +452,7 @@ const Checkout = ({ cart, onSuccess }) => {
                         city: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
                     required
                   />
                 </div>
@@ -356,13 +468,14 @@ const Checkout = ({ cart, onSuccess }) => {
                         country: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all appearance-none bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNoZXZyb24tZG93biI+PHBhdGggZD0ibTYgOSA2IDYgNi02Ii8+PC9zdmc+')] bg-no-repeat bg-[center_right_1rem]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-gray-500 hover:border-gray-400 transition-all appearance-none bg-white bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNoZXZyb24tZG93biI+PHBhdGggZD0ibTYgOSA2IDYgNi02Ii8+PC9zdmc+')] bg-no-repeat bg-[center_right_1rem]"
                     required
                   >
                     <option value="US">United States</option>
                     <option value="UK">United Kingdom</option>
                     <option value="CA">Canada</option>
                     <option value="AU">Australia</option>
+                    <option value="BN">Bangladesh</option>
                     <option value="IN">India</option>
                   </select>
                 </div>
@@ -379,7 +492,7 @@ const Checkout = ({ cart, onSuccess }) => {
                         zipCode: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 hover:border-gray-400 transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 hover:border-gray-400 transition-all"
                     required
                   />
                 </div>
@@ -391,11 +504,11 @@ const Checkout = ({ cart, onSuccess }) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center text-sm text-gray-500 mb-6 p-4 bg-indigo-50 rounded-lg"
+              className="flex items-center text-sm text-gray-500 mb-6 p-4 bg-gray-50 rounded-lg"
             >
-              <FiLock className="text-indigo-600 mr-3 flex-shrink-0" />
+              <FiLock className="text-gray-600 mr-3 flex-shrink-0" />
               <div>
-                <p className="font-medium text-indigo-800">Secure Payment</p>
+                <p className="font-medium text-gray-800">Secure Payment</p>
                 <p>Your transaction is protected with 256-bit encryption</p>
               </div>
             </motion.div>
@@ -409,7 +522,7 @@ const Checkout = ({ cart, onSuccess }) => {
               className={`w-full py-4 px-6 rounded-xl font-bold text-white ${
                 loading
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+                  : "bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-700 hover:to-gray-900 shadow-lg"
               } transition-all flex items-center justify-center`}
             >
               {loading ? (
@@ -417,7 +530,7 @@ const Checkout = ({ cart, onSuccess }) => {
               ) : (
                 <>
                   <FiLock className="mr-2" />
-                  Pay Securely ${total.toFixed(2)}
+                  Pay Securely ৳{total.toFixed(2)}
                 </>
               )}
             </motion.button>
@@ -458,7 +571,7 @@ const Checkout = ({ cart, onSuccess }) => {
                     </div>
                   </div>
                   <span className="text-sm font-medium">
-                    ${course.price.toFixed(2)}
+                    ৳ {course.price.toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -467,15 +580,15 @@ const Checkout = ({ cart, onSuccess }) => {
             <div className="space-y-3 border-t border-gray-200 pt-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">${total.toFixed(2)}</span>
+                <span className="font-medium">৳ {total.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Tax</span>
-                <span className="font-medium">$0.00</span>
+                <span className="font-medium">৳ 0.00</span>
               </div>
               <div className="flex justify-between text-lg font-bold pt-2">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>৳ {total.toFixed(2)}</span>
               </div>
             </div>
 

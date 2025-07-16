@@ -27,7 +27,57 @@ const CourseList = ({ setActiveView }) => {
   const [loading, setLoading] = useState(true);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
 
-  // Dummy data - replace with API calls in production
+  // API Integration Note:
+  // In a production environment, replace this useEffect with actual API calls
+  // Example API call structure:
+  /*
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('https://api.yourdomain.com/courses');
+        const data = await response.json();
+        setCourses(data);
+        setFilteredCourses(data);
+      } catch (error) {
+        toast.error('Failed to load courses');
+        console.error('Error fetching courses:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    const fetchCart = async () => {
+      try {
+        const response = await fetch('https://api.yourdomain.com/cart', {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+        const data = await response.json();
+        setCart(data);
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+      }
+    };
+    
+    const fetchEnrolledCourses = async () => {
+      try {
+        const response = await fetch('https://api.yourdomain.com/enrollments', {
+          headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+        const data = await response.json();
+        setEnrolledCourses(data.map(course => course.id));
+      } catch (error) {
+        console.error('Error fetching enrollments:', error);
+      }
+    };
+    
+    fetchCourses();
+    fetchCart();
+    fetchEnrolledCourses();
+  }, []);
+  */
+
+  // Currently using dummy data - replace with API calls above
   useEffect(() => {
     // Simulate API loading
     setTimeout(() => {
@@ -35,11 +85,11 @@ const CourseList = ({ setActiveView }) => {
       setFilteredCourses(dummyCourses);
       setLoading(false);
 
-      // Load cart from localStorage
+      // Load cart from localStorage (replace with API in production)
       const savedCart = JSON.parse(localStorage.getItem("courseCart")) || [];
       setCart(savedCart);
 
-      // Load enrolled courses (simulated)
+      // Load enrolled courses (simulated - replace with API)
       setEnrolledCourses(["course1", "course3"]);
     }, 800);
   }, []);
@@ -66,7 +116,7 @@ const CourseList = ({ setActiveView }) => {
     setFilteredCourses(results);
   }, [searchTerm, priceFilter, courses]);
 
-  // Add to cart function
+  // Add to cart function - would call API in production
   const addToCart = (course) => {
     if (cart.some((item) => item.id === course.id)) {
       toast.error("Course already in cart");
@@ -82,26 +132,104 @@ const CourseList = ({ setActiveView }) => {
     setCart(updatedCart);
     localStorage.setItem("courseCart", JSON.stringify(updatedCart));
     toast.success("Course added to cart");
+
+    // API Integration Note:
+    /*
+    try {
+      const response = await fetch('https://api.yourdomain.com/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({ courseId: course.id })
+      });
+      if (!response.ok) throw new Error('Failed to add to cart');
+      const data = await response.json();
+      setCart(data.cartItems);
+      toast.success("Course added to cart");
+    } catch (error) {
+      toast.error("Failed to add to cart");
+      console.error(error);
+    }
+    */
   };
 
-  // Remove from cart function
+  // Remove from cart function - would call API in production
   const removeFromCart = (courseId) => {
     const updatedCart = cart.filter((item) => item.id !== courseId);
     setCart(updatedCart);
     localStorage.setItem("courseCart", JSON.stringify(updatedCart));
     toast.success("Course removed from cart");
+
+    // API Integration Note:
+    /*
+    try {
+      const response = await fetch(`https://api.yourdomain.com/cart/${courseId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${userToken}` }
+      });
+      if (!response.ok) throw new Error('Failed to remove from cart');
+      const data = await response.json();
+      setCart(data.cartItems);
+      toast.success("Course removed from cart");
+    } catch (error) {
+      toast.error("Failed to remove from cart");
+      console.error(error);
+    }
+    */
   };
 
-  // Enroll in free course
+  // Enroll course function - would call API in production
   const enrollCourse = (courseId) => {
     if (enrolledCourses.includes(courseId)) {
       toast.error("You're already enrolled in this course");
       return;
     }
 
+    const courseToEnroll = courses.find((course) => course.id === courseId);
+
+    // Add progress tracking to the course object
+    const courseWithProgress = {
+      ...courseToEnroll,
+      progress: 0, // Initialize with 0% progress
+      lastAccessed: null, // Track when course was last accessed
+    };
+
+    // Update enrolled courses state
     setEnrolledCourses([...enrolledCourses, courseId]);
+
+    // Save to myCourses in localStorage (replace with API)
+    const myCourses = JSON.parse(localStorage.getItem("myCourses")) || [];
+    localStorage.setItem(
+      "myCourses",
+      JSON.stringify([...myCourses, courseWithProgress])
+    );
+
     toast.success("Successfully enrolled in course!");
-    navigate(`/learn/${courseId}`);
+    setActiveView("myCourses");
+
+    // API Integration Note:
+    /*
+    try {
+      const response = await fetch('https://api.yourdomain.com/enrollments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify({ courseId })
+      });
+      if (!response.ok) throw new Error('Failed to enroll');
+      const data = await response.json();
+      setEnrolledCourses([...enrolledCourses, courseId]);
+      toast.success("Successfully enrolled in course!");
+      setActiveView("myCourses");
+    } catch (error) {
+      toast.error("Failed to enroll in course");
+      console.error(error);
+    }
+    */
   };
 
   // Check if course is in cart
@@ -117,7 +245,7 @@ const CourseList = ({ setActiveView }) => {
   // Calculate cart total
   const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
 
-  // Dummy course data
+  // Dummy course data - replace with API data
   const dummyCourses = [
     {
       id: "course1",
@@ -132,7 +260,6 @@ const CourseList = ({ setActiveView }) => {
       duration: "8 hours",
       price: 0,
       type: "free",
-      category: "Web Development",
     },
     {
       id: "course2",
@@ -147,7 +274,6 @@ const CourseList = ({ setActiveView }) => {
       duration: "12 hours",
       price: 49.99,
       type: "premium",
-      category: "Web Development",
     },
     {
       id: "course3",
@@ -162,7 +288,6 @@ const CourseList = ({ setActiveView }) => {
       duration: "10 hours",
       price: 0,
       type: "free",
-      category: "Data Science",
     },
     {
       id: "course4",
@@ -177,7 +302,6 @@ const CourseList = ({ setActiveView }) => {
       duration: "15 hours",
       price: 59.99,
       type: "premium",
-      category: "Mobile Development",
     },
     {
       id: "course5",
@@ -192,7 +316,6 @@ const CourseList = ({ setActiveView }) => {
       duration: "6 hours",
       price: 39.99,
       type: "premium",
-      category: "Design",
     },
     {
       id: "course6",
@@ -206,22 +329,34 @@ const CourseList = ({ setActiveView }) => {
       duration: "20 hours",
       price: 0,
       type: "free",
-      category: "Web Development",
     },
   ];
 
   return (
     <div className="min-h-screen text-gray-900 p-0">
-      {/* Header */}
-      <header className=" py-6 px-4 sm:px-6 lg:px-8 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Courses</h1>
-          <div className="flex items-center space-x-4">
+      {/* Header - Responsive for all devices */}
+      <header className="bg-white py-4 sm:py-6 px-4 sm:px-6 lg:px-8 border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+          <h1 className="text-xl sm:text-2xl font-bold">Courses</h1>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <button
+              onClick={() => setActiveView("myCourses")}
+              className="relative p-1 sm:p-2 rounded-full hover:bg-gray-100"
+              aria-label="My Courses"
+            >
+              <FiBookOpen className="text-lg sm:text-xl" />
+              {enrolledCourses.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {enrolledCourses.length}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setActiveView("cart")}
-              className="relative p-2 rounded-full hover:bg-gray-100"
+              className="relative p-1 sm:p-2 rounded-full hover:bg-gray-100"
+              aria-label="Shopping Cart"
             >
-              <FiShoppingCart className="text-xl" />
+              <FiShoppingCart className="text-lg sm:text-xl" />
               {cart.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {cart.length}
@@ -232,11 +367,11 @@ const CourseList = ({ setActiveView }) => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Search and Filter Section */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* Main Content - Responsive layout */}
+      <main className="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+        {/* Search and Filter Section - Responsive layout */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
             <div className="relative flex-1 max-w-2xl">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <FiSearch className="text-gray-400" />
@@ -244,19 +379,19 @@ const CourseList = ({ setActiveView }) => {
               <input
                 type="text"
                 placeholder="Search courses..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:border-gray-500 hover:border-gray-500"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:border-gray-500 hover:border-gray-500 text-sm sm:text-base"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="flex items-center">
-                <FiFilter className="text-gray-500 mr-2" />
+                <FiFilter className="text-gray-500 mr-1 sm:mr-2 text-sm sm:text-base" />
                 <select
                   value={priceFilter}
                   onChange={(e) => setPriceFilter(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:border-gray-500 hover:border-gray-500"
+                  className="border border-gray-300 rounded-lg px-2 sm:px-3 py-1 sm:py-2 focus:border-gray-500 hover:border-gray-500 text-sm sm:text-base"
                 >
                   <option value="all">All Courses</option>
                   <option value="free">Free Courses</option>
@@ -267,25 +402,25 @@ const CourseList = ({ setActiveView }) => {
           </div>
         </div>
 
-        {/* Course Grid */}
+        {/* Course Grid - Responsive columns */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
                 className="bg-gray-100 rounded-lg overflow-hidden animate-pulse"
               >
-                <div className="h-48 bg-gray-200"></div>
-                <div className="p-4 space-y-3">
-                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-40 sm:h-48 bg-gray-200"></div>
+                <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+                  <div className="h-5 sm:h-6 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 sm:h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-3 sm:h-4 bg-gray-200 rounded w-1/2"></div>
                 </div>
               </div>
             ))}
           </div>
         ) : filteredCourses.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredCourses.map((course) => (
               <motion.div
                 key={course.id}
@@ -300,20 +435,20 @@ const CourseList = ({ setActiveView }) => {
                     <img
                       src={course.thumbnail}
                       alt={course.title}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-40 sm:h-48 object-cover"
                     />
-                    <div className="absolute top-2 right-2 bg-black text-white px-2 py-1 text-xs rounded">
-                      {course.price === 0 ? "FREE" : `$${course.price}`}
+                    <div className="absolute top-2 right-2 bg-black bg-opacity-80 text-white px-2 py-1 text-xs rounded">
+                      {course.price === 0 ? "FREE" : `৳${course.price}`}
                     </div>
                   </div>
-                  <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="text-lg font-bold mb-1 line-clamp-2">
+                  <div className="p-3 sm:p-4 flex flex-col flex-grow">
+                    <h3 className="text-base sm:text-lg font-bold mb-1 line-clamp-2">
                       {course.title}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">
                       {course.description}
                     </p>
-                    <div className="flex text-xs text-gray-500 mb-2 space-x-4">
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mb-2">
                       <span className="flex items-center">
                         <FiStar className="mr-1 text-yellow-400" />{" "}
                         {course.rating}
@@ -326,40 +461,40 @@ const CourseList = ({ setActiveView }) => {
                         <FiClock className="mr-1" /> {course.duration}
                       </span>
                     </div>
-                    <span className="text-sm text-gray-700 mb-2">
+                    <span className="text-xs sm:text-sm text-gray-700 mb-2">
                       By {course.instructor}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-4 pt-0">
+                <div className="p-3 sm:p-4 pt-0">
                   {isEnrolled(course.id) ? (
                     <button
                       onClick={() => navigate(`/learn/${course.id}`)}
-                      className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm hover:bg-gray-800 transition-all"
+                      className="w-full bg-gray-900 text-white py-1 sm:py-2 rounded-lg text-xs sm:text-sm hover:bg-gray-800 transition-all"
                     >
                       Continue Learning
                     </button>
                   ) : course.price === 0 ? (
                     <button
                       onClick={() => enrollCourse(course.id)}
-                      className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm hover:bg-gray-800 transition-all"
+                      className="w-full bg-gray-900 text-white py-1 sm:py-2 rounded-lg text-xs sm:text-sm hover:bg-gray-800 transition-all"
                     >
                       Enroll Now
                     </button>
                   ) : isInCart(course.id) ? (
                     <button
                       onClick={() => removeFromCart(course.id)}
-                      className="w-full bg-red-100 text-red-700 py-2 rounded-lg text-sm hover:bg-red-200 flex items-center justify-center"
+                      className="w-full bg-red-100 text-red-700 py-1 sm:py-2 rounded-lg text-xs sm:text-sm hover:bg-red-200 flex items-center justify-center"
                     >
-                      <FiShoppingCart className="mr-2" /> Remove
+                      <FiShoppingCart className="mr-1 sm:mr-2" /> Remove
                     </button>
                   ) : (
                     <button
                       onClick={() => addToCart(course)}
-                      className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm hover:bg-gray-800 flex items-center justify-center"
+                      className="w-full bg-gray-900 text-white py-1 sm:py-2 rounded-lg text-xs sm:text-sm hover:bg-gray-800 flex items-center justify-center"
                     >
-                      <FiShoppingCart className="mr-2" /> Add to Cart
+                      <FiShoppingCart className="mr-1 sm:mr-2" /> Add to Cart
                     </button>
                   )}
                 </div>
@@ -367,14 +502,14 @@ const CourseList = ({ setActiveView }) => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <FiBookOpen className="text-gray-400 text-3xl" />
+          <div className="text-center py-8 sm:py-12">
+            <div className="mx-auto w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+              <FiBookOpen className="text-gray-400 text-2xl sm:text-3xl" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1">
               No courses found
             </h3>
-            <p className="text-gray-500">
+            <p className="text-sm sm:text-base text-gray-500">
               Try adjusting your search or filter to find what you're looking
               for.
             </p>

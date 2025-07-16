@@ -9,7 +9,6 @@ import {
   FiStar,
   FiCheckCircle,
 } from "react-icons/fi";
-
 import toast from "react-hot-toast";
 import Checkout from "./Checkout";
 
@@ -17,24 +16,68 @@ const Cart = ({ setActiveView }) => {
   const [cart, setCart] = useState([]);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
-  // Load cart from localStorage
+  // API Integration Note:
+  // In production, replace localStorage with API calls
+  /*
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const response = await fetch('https://api.yourdomain.com/cart', {
+          headers: { 
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) throw new Error('Failed to fetch cart');
+        const data = await response.json();
+        setCart(data.items);
+      } catch (error) {
+        toast.error('Failed to load cart');
+        console.error('Error fetching cart:', error);
+      }
+    };
+    
+    fetchCart();
+  }, []);
+  */
+
+  // Currently using localStorage - replace with API above
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem("courseCart")) || [];
     setCart(savedCart);
   }, []);
 
-  // Remove item from cart
+  // Remove item from cart - would call API in production
   const removeFromCart = (courseId) => {
     const updatedCart = cart.filter((item) => item.id !== courseId);
     setCart(updatedCart);
     localStorage.setItem("courseCart", JSON.stringify(updatedCart));
     toast.success("Course removed from cart");
+
+    // API Integration Note:
+    /*
+    try {
+      const response = await fetch(`https://api.yourdomain.com/cart/${courseId}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to remove item');
+      const data = await response.json();
+      setCart(data.updatedCart);
+      toast.success("Course removed from cart");
+    } catch (error) {
+      toast.error("Failed to remove course");
+      console.error(error);
+    }
+    */
   };
 
   // Calculate total
   const total = cart.reduce((sum, item) => sum + item.price, 0);
 
-  // Open Checkout Modal
   const openCheckoutModal = () => {
     if (cart.length === 0) {
       toast.error("Your cart is empty");
@@ -43,21 +86,70 @@ const Cart = ({ setActiveView }) => {
     setShowCheckoutModal(true);
   };
 
-  // Close Checkout Modal
   const closeCheckoutModal = () => {
     setShowCheckoutModal(false);
   };
 
-  // Handle successful checkout
+  // Handle successful checkout - would call API in production
   const handleCheckoutSuccess = () => {
+    // Add purchased courses to myCourses
+    const myCourses = JSON.parse(localStorage.getItem("myCourses")) || [];
+    localStorage.setItem("myCourses", JSON.stringify([...myCourses, ...cart]));
+
+    // Clear cart
     setCart([]);
     localStorage.removeItem("courseCart");
     setShowCheckoutModal(false);
+
     toast.success("Payment successful! You are now enrolled in the courses.");
+    setActiveView("myCourses");
+
+    // API Integration Note:
+    /*
+    try {
+      const response = await fetch('https://api.yourdomain.com/checkout', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cartItems: cart })
+      });
+      
+      if (!response.ok) throw new Error('Checkout failed');
+      
+      // Add courses to enrolled courses
+      await fetch('https://api.yourdomain.com/enrollments/batch', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ courseIds: cart.map(c => c.id) })
+      });
+      
+      // Clear cart via API
+      await fetch('https://api.yourdomain.com/cart/clear', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      setCart([]);
+      setShowCheckoutModal(false);
+      toast.success("Payment successful! You are now enrolled in the courses.");
+      setActiveView("myCourses");
+    } catch (error) {
+      toast.error("Checkout failed. Please try again.");
+      console.error(error);
+    }
+    */
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white text-gray-900">
+    <div className="min-h-screen text-gray-900">
       {/* Header */}
       <header className="bg-white py-6 px-4 sm:px-6 lg:px-8 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -79,12 +171,12 @@ const Cart = ({ setActiveView }) => {
             {/* Cart Items */}
             <div className="lg:w-2/3">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-purple-50">
                   <h2 className="text-xl font-bold text-gray-900">
                     {cart.length} {cart.length === 1 ? "Course" : "Courses"} in
                     Cart
                   </h2>
-                  <p className="text-indigo-600 mt-1">
+                  <p className="text-gray-600 mt-1">
                     Review your selections before checkout
                   </p>
                 </div>
@@ -138,8 +230,8 @@ const Cart = ({ setActiveView }) => {
                             <div className="flex justify-between items-end">
                               <div>
                                 {course.type === "premium" ? (
-                                  <span className="text-lg font-bold text-indigo-600">
-                                    ${course.price.toFixed(2)}
+                                  <span className="text-lg font-bold text-gray-600">
+                                    ৳ {course.price.toFixed(2)}
                                   </span>
                                 ) : (
                                   <span className="text-lg font-bold text-green-600">
@@ -161,7 +253,7 @@ const Cart = ({ setActiveView }) => {
             <div className="lg:w-1/3">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <FiCreditCard className="mr-2 text-indigo-600" />
+                  <FiCreditCard className="mr-2 text-gray-600" />
                   Order Summary
                 </h2>
 
@@ -187,7 +279,7 @@ const Cart = ({ setActiveView }) => {
                         </div>
                       </div>
                       <span className="text-sm font-medium">
-                        ${course.price.toFixed(2)}
+                        ৳{course.price.toFixed(2)}
                       </span>
                     </div>
                   ))}
@@ -196,15 +288,15 @@ const Cart = ({ setActiveView }) => {
                 <div className="space-y-3 border-t border-gray-200 pt-4">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">${total.toFixed(2)}</span>
+                    <span className="font-medium">৳ {total.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax</span>
-                    <span className="font-medium">$0.00</span>
+                    <span className="font-medium">৳ 0.00</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>৳ {total.toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -212,20 +304,19 @@ const Cart = ({ setActiveView }) => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={openCheckoutModal}
-                  className="w-full mt-6 py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-colors flex items-center justify-center"
+                  className="w-full mt-6 py-3 px-4 bg-gradient-to-r from-gray-600 to-gray-800 text-white rounded-lg shadow-md hover:from-gray-700 hover:to-gray-900 transition-colors flex items-center justify-center"
                 >
                   <FiCreditCard className="mr-2" />
                   Proceed to Checkout
                 </motion.button>
 
-                <div className="mt-6 p-4 bg-indigo-50 rounded-lg">
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-start">
-                    <FiCheckCircle className="text-indigo-500 mt-1 mr-3" />
                     <div>
-                      <h4 className="text-sm font-medium text-indigo-800">
+                      <h4 className="text-sm font-medium text-gray-800">
                         What's included
                       </h4>
-                      <ul className="mt-1 text-xs text-indigo-600 list-disc list-inside">
+                      <ul className="mt-1 text-xs text-gray-600 list-disc list-inside">
                         <li>Lifetime access</li>
                         <li>Certificate of completion</li>
                         <li>30-day money-back guarantee</li>
@@ -242,8 +333,8 @@ const Cart = ({ setActiveView }) => {
             animate={{ scale: 1, opacity: 1 }}
             className="text-center py-16"
           >
-            <div className="mx-auto w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-              <FiShoppingCart size={40} className="text-indigo-500" />
+            <div className="mx-auto w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+              <FiShoppingCart size={40} className="text-gray-500" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">
               Your cart is empty
@@ -256,7 +347,7 @@ const Cart = ({ setActiveView }) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setActiveView("courseList")}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors"
+              className="px-6 py-3 bg-gray-600 text-white rounded-lg shadow-md hover:bg-gray-700 transition-colors"
             >
               Browse Courses
             </motion.button>
@@ -281,7 +372,7 @@ const Cart = ({ setActiveView }) => {
             >
               <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                  <FiCreditCard className="mr-2 text-indigo-600" />
+                  <FiCreditCard className="mr-2 text-gray-600" />
                   Secure Checkout
                 </h2>
                 <button

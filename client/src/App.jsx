@@ -15,6 +15,9 @@ import ResetPasswordStudent from "./component/student/ResetPassword";
 import StudentDashboard from "./component/student/studentDashboard/studentDashboard";
 import TeacherDashboard from "./component/teacher/teacherDashboard/teacherDashboard";
 
+import CoursePlayer from "./component/student/studentDashboard/courses/courseView/CoursePlayer";
+import CourseOverview from "./component/student/studentDashboard/courses/courseView/CourseOverview";
+
 const isAuthenticated = () => {
   const token = localStorage.getItem("token");
   return !!token;
@@ -71,6 +74,9 @@ const App = () => {
           element={<ResetPasswordStudent />}
         />
         <Route path="/student/dashboard" element={<StudentDashboard />} />
+        {/* demo */}
+        <Route path="/" element={<CourseOverview />} />
+        <Route path="/course/:courseId" element={<CoursePlayer />} />
       </Routes>
     </>
   );

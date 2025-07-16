@@ -1,21 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "./sidebar";
 import Settings from "./settings";
 import CourseList from "./courses/coursesList";
 import Cart from "./courses/cart";
-import MyCourses from "./courses/myCOurses";
+import MyCourses from "./courses/myCourses";
 
 const StudentDashboard = () => {
   const [activeView, setActiveView] = useState("dashboard");
+  const [cart, setCart] = useState([]);
+
+  // Load cart from localStorage on initial render
+  useEffect(() => {
+    const savedCart = JSON.parse(localStorage.getItem("courseCart")) || [];
+    setCart(savedCart);
+  }, []);
 
   const renderView = () => {
     switch (activeView) {
       case "settings":
         return <Settings />;
       case "courseList":
-        return <CourseList setActiveView={setActiveView} />;
+        return (
+          <CourseList
+            setActiveView={setActiveView}
+            cart={cart}
+            setCart={setCart}
+          />
+        );
       case "cart":
-        return <Cart setActiveView={setActiveView} />;
+        return (
+          <Cart setActiveView={setActiveView} cart={cart} setCart={setCart} />
+        );
       case "myCourses":
         return <MyCourses setActiveView={setActiveView} />;
       default:
